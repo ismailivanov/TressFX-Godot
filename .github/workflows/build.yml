@@ -1,0 +1,66 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux x86_64
+            runner: ubuntu-22.04
+            platform: linux
+            arch: x86_64
+          - name: Windows x86_64
+            runner: windows-latest
+            platform: windows
+            arch: x86_64
+          - name: macOS universal
+            runner: macos-latest
+            platform: macos
+            arch: universal
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch godot-cpp
+        run: git clone --depth 1 https://github.com/godotengine/godot-cpp godot-cpp
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install SCons
+        run: python -m pip install scons
+
+      - name: Build debug
+        run: scons platform=${{ matrix.platform }} arch=${{ matrix.arch }} target=template_debug
+
+      - name: Build release
+        run: scons platform=${{ matrix.platform }} arch=${{ matrix.arch }} target=template_release
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tressfx-${{ matrix.platform }}-${{ matrix.arch }}
+          path: addons/tressfx/bin/
+
+  package:
+    name: Addon package
+    needs: build
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: tressfx-*
+          path: addons/tressfx/bin/
+          merge-multiple: true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tressfx-addon
+          path: addons/tressfx/

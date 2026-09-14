@@ -1,0 +1,20 @@
+# Godot
+.godot/
+*.import.tmp
+
+# Build output
+src/gen/
+*.os
+*.o
+*.obj
+*.pdb
+*.ilk
+*.exp
+*.lib
+.sconsign.dblite
+.sconf_temp/
+compile_commands.json
+__pycache__/
+
+# godot-cpp is cloned, not vendored (see README, Building from source)
+godot-cpp/

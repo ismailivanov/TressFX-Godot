@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="TressFXStats" inherits="Label" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+		On-screen performance readout for TressFX.
+	</brief_description>
+	<description>
+		Shows the frame rate, the viewport draw time, the GPU time of the hair simulation and of the distance field builds, the main-thread cost of every [TressFXHair] and [TressFXCollisionMesh] in the tree, and the strand and cell counts. Drop it under a [CanvasLayer]; it anchors itself to the top right corner.
+	</description>
+	<tutorials>
+	</tutorials>
+	<members>
+		<member name="measure_gpu" type="bool" setter="set_measure_gpu" getter="get_measure_gpu" default="true">
+			Capture [RenderingDevice] timestamps around the hair and distance field compute passes. No measurable cost, but it is the only thing in the addon that touches the timestamp queries, so it can be turned off.
+		</member>
+	</members>
+</class>

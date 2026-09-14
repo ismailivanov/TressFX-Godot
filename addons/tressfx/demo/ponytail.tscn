@@ -1,0 +1,144 @@
+[gd_scene format=3 uid="uid://368sup1xkh8l"]
+
+[ext_resource type="Script" uid="uid://bhaejsrc1p1o7" path="res://addons/tressfx/demo/bust.gd" id="1"]
+[ext_resource type="PackedScene" uid="uid://cpseu8b34bhqh" path="res://addons/tressfx/demo/ponytail/ponytail.fbx" id="2"]
+[ext_resource type="Material" path="res://addons/tressfx/demo/ponytail_hair_material.tres" id="6"]
+[ext_resource type="Material" path="res://addons/tressfx/demo/ponytail_tail_material.tres" id="7"]
+
+[sub_resource type="Environment" id="env"]
+background_mode = 1
+background_color = Color(0.22, 0.23, 0.27, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.6, 0.62, 0.7, 1)
+ambient_light_energy = 0.5
+
+[sub_resource type="StandardMaterial3D" id="face"]
+albedo_color = Color(0.82, 0.66, 0.58, 1)
+roughness = 0.6
+
+[sub_resource type="StandardMaterial3D" id="jacket"]
+albedo_color = Color(0.16, 0.13, 0.11, 1)
+roughness = 0.8
+
+[sub_resource type="StandardMaterial3D" id="eye"]
+albedo_color = Color(0.9, 0.9, 0.88, 1)
+roughness = 0.2
+
+[sub_resource type="CapsuleMesh" id="head_shape"]
+radius = 0.26
+height = 0.62
+
+[sub_resource type="SphereMesh" id="back_shape"]
+radius = 0.22
+height = 0.44
+
+[sub_resource type="CapsuleMesh" id="neck_shape"]
+radius = 0.17
+height = 0.6
+
+[sub_resource type="CapsuleMesh" id="torso_shape"]
+radius = 0.44
+height = 1.7
+
+[node name="Ponytail" type="Node3D" unique_id=1900467299]
+script = ExtResource("1")
+idle_yaw = 0.6
+idle_speed = 0.7
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1885963767]
+environment = SubResource("env")
+
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=1993041849]
+transform = Transform3D(0.866, -0.25, 0.433, 0, 0.866, 0.5, -0.5, -0.433, 0.75, 0, 3, 2)
+shadow_enabled = true
+directional_shadow_max_distance = 12.0
+
+[node name="Rim" type="OmniLight3D" parent="." unique_id=1225372723]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.8, 1.8, -1.2)
+light_color = Color(1, 0.85, 0.7, 1)
+light_energy = 6.0
+omni_range = 4.0
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=158803391]
+transform = Transform3D(1, 0, 0, 0, 0.99, 0.14, 0, -0.14, 0.99, 0, 1.05, 1.7)
+
+[node name="Bust" type="Node3D" parent="." unique_id=1414764951]
+transform = Transform3D(0.94, 0, -0.342, 0, 1, 0, 0.342, 0, 0.94, 0, 0, 0)
+
+[node name="Ponytail" parent="Bust" unique_id=1813656893 instance=ExtResource("2")]
+
+[node name="head" parent="Bust/Ponytail/OldRuby_head" parent_id_path=PackedInt32Array(1813656893, 687308147) index="2" unique_id=1635471044]
+surface_material_override/0 = SubResource("face")
+
+[node name="jacket" parent="Bust/Ponytail/OldRuby_head" parent_id_path=PackedInt32Array(1813656893, 687308147) index="4" unique_id=1825837486]
+surface_material_override/0 = SubResource("jacket")
+
+[node name="eye_right" parent="Bust/Ponytail/OldRuby_head" parent_id_path=PackedInt32Array(1813656893, 687308147) index="5" unique_id=1935177210]
+surface_material_override/0 = SubResource("eye")
+
+[node name="eye_left" parent="Bust/Ponytail/OldRuby_head" parent_id_path=PackedInt32Array(1813656893, 687308147) index="6" unique_id=974109951]
+surface_material_override/0 = SubResource("eye")
+
+[node name="HairHead" type="TressFXHair" parent="Bust" unique_id=317080482 node_paths=PackedStringArray("collision_meshes")]
+tfx_path = "res://addons/tressfx/demo/ponytail/ponytail_hair_head.tfx"
+num_follow_hairs = 3
+tip_separation = 1.0
+import_scale = 0.01
+material = ExtResource("6")
+cast_hair_shadows = true
+lod_enabled = true
+lod_start_distance = 2.5
+lod_end_distance = 7.0
+lod_percent = 0.25
+collision_meshes = [NodePath("../HeadCollider"), NodePath("../BackCollider"), NodePath("../NeckCollider"), NodePath("../TorsoCollider")]
+local_stiffness = 0.4
+global_stiffness = 0.3
+global_range = 0.4
+length_iterations = 3
+damping = 0.2
+gravity = 1.0
+
+[node name="HairTail" type="TressFXHair" parent="Bust" unique_id=2112097147 node_paths=PackedStringArray("collision_meshes")]
+tfx_path = "res://addons/tressfx/demo/ponytail/ponytail_hair_tail.tfx"
+num_follow_hairs = 3
+tip_separation = 1.0
+import_scale = 0.01
+material = ExtResource("7")
+cast_hair_shadows = true
+lod_enabled = true
+lod_start_distance = 2.5
+lod_end_distance = 7.0
+lod_percent = 0.25
+collision_meshes = [NodePath("../HeadCollider"), NodePath("../BackCollider"), NodePath("../NeckCollider"), NodePath("../TorsoCollider")]
+vsp_coeff = 0.25
+local_stiffness = 0.35
+global_stiffness = 0.06
+global_range = 0.2
+length_iterations = 3
+damping = 0.1
+gravity = 1.5
+
+[node name="HeadCollider" type="TressFXCollisionMesh" parent="Bust"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, -0.02)
+mesh = SubResource("head_shape")
+num_cells_x = 48
+
+[node name="BackCollider" type="TressFXCollisionMesh" parent="Bust"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.83, -0.14)
+mesh = SubResource("back_shape")
+num_cells_x = 40
+[node name="NeckCollider" type="TressFXCollisionMesh" parent="Bust" unique_id=1953188897]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.42, 0)
+mesh = SubResource("neck_shape")
+num_cells_x = 32
+
+[node name="TorsoCollider" type="TressFXCollisionMesh" parent="Bust" unique_id=2040632353]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, -0.15, 0)
+mesh = SubResource("torso_shape")
+num_cells_x = 48
+
+[node name="StatsLayer" type="CanvasLayer" parent="." unique_id=1915995647]
+
+[node name="Stats" type="TressFXStats" parent="StatsLayer" unique_id=562456617]
+
+[editable path="Bust/Ponytail"]

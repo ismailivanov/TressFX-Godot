@@ -1,0 +1,21 @@
+[configuration]
+
+entry_symbol = "tressfx_library_init"
+compatibility_minimum = "4.7"
+
+[libraries]
+
+linux.debug.x86_64 = "res://addons/tressfx/bin/libtressfx.linux.template_debug.x86_64.so"
+linux.release.x86_64 = "res://addons/tressfx/bin/libtressfx.linux.template_release.x86_64.so"
+linux.debug.arm64 = "res://addons/tressfx/bin/libtressfx.linux.template_debug.arm64.so"
+linux.release.arm64 = "res://addons/tressfx/bin/libtressfx.linux.template_release.arm64.so"
+windows.debug.x86_64 = "res://addons/tressfx/bin/libtressfx.windows.template_debug.x86_64.dll"
+windows.release.x86_64 = "res://addons/tressfx/bin/libtressfx.windows.template_release.x86_64.dll"
+macos.debug = "res://addons/tressfx/bin/libtressfx.macos.template_debug.framework"
+macos.release = "res://addons/tressfx/bin/libtressfx.macos.template_release.framework"
+
+[icons]
+
+TressFXHair = "res://addons/tressfx/icons/tressfx_hair.svg"
+TressFXCollisionMesh = "res://addons/tressfx/icons/tressfx_collision_mesh.svg"
+TressFXStats = "res://addons/tressfx/icons/tressfx_stats.svg"

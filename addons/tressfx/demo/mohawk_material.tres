@@ -1,0 +1,15 @@
+[gd_resource type="ShaderMaterial" load_steps=3 format=3]
+
+[ext_resource type="Shader" path="res://addons/tressfx/shaders/tressfx_strand.gdshader" id="1"]
+[ext_resource type="Texture2D" path="res://addons/tressfx/demo/ratboy/ratBoySubstanceReady_main_BaseColor.png" id="2"]
+
+[resource]
+shader = ExtResource("1")
+shader_parameter/base_albedo = ExtResource("2")
+shader_parameter/fiber_radius = 0.002
+shader_parameter/fiber_ratio = 0.06
+shader_parameter/k_diffuse = 0.22
+shader_parameter/k_spec1 = 0.012
+shader_parameter/spec_exp1 = 14.4
+shader_parameter/k_spec2 = 0.136
+shader_parameter/spec_exp2 = 11.8

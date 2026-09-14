@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="TressFXHair" inherits="Node3D" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+		A GPU-simulated hair or fur object (AMD TressFX).
+	</brief_description>
+	<description>
+		Loads a [code].tfx[/code] hair asset, simulates its guide strands on the GPU every frame, keeps them out of every [TressFXCollisionMesh] listed in [member collision_meshes] and draws the strands as camera-facing ribbons.
+		With a [member hair_skeleton] and a [code].tfxbone[/code] file the hair is skinned to the animated skeleton; without a skeleton it follows this node rigidly.
+		The node simulates in the editor too: move the skeleton or scrub its animation and the hair follows. When nothing has changed for a few seconds the editor simulation sleeps until the next change.
+		Requires the Forward+ or Mobile renderer (the Compatibility renderer has no [RenderingDevice]). Look and lighting settings live in a [ShaderMaterial] using [code]addons/tressfx/shaders/tressfx_strand.gdshader[/code], see [member material].
+		[b]Note:[/b] Use MSAA 4x together with TAA: the strands are rendered with alpha-to-coverage, and TAA turns the dithered edges into a soft volume.
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="capture_positions">
+			<return type="void" />
+			<description>
+				Debug helper: queues a readback of the simulated vertex positions from the GPU. The result is available from [method get_captured_positions] on the following frame. Reading back stalls the GPU, do not call it every frame in a shipped game.
+			</description>
+		</method>
+		<method name="get_captured_positions" qualifiers="const">
+			<return type="PackedFloat32Array" />
+			<description>
+				Returns the positions captured by the last [method capture_positions] call, four floats per vertex (x, y, z, and 0 for pinned vertices) in world space, guide and follow strands interleaved.
+			</description>
+		</method>
+		<method name="get_cpu_time_usec" qualifiers="const">
+			<return type="int" />
+			<description>
+				Main-thread time spent by this node in the last frame, in microseconds (bone matrices, parameters and command recording; the simulation itself runs on the GPU).
+			</description>
+		</method>
+		<method name="get_guide_strand_count" qualifiers="const">
+			<return type="int" />
+			<description>
+				Number of simulated guide strands, padded to a multiple of 64.
+			</description>
+		</method>
+		<method name="get_strand_count" qualifiers="const">
+			<return type="int" />
+			<description>
+				Number of drawn strands: guide strands times ([member num_follow_hairs] + 1).
+			</description>
+		</method>
+		<method name="get_vertex_count" qualifiers="const">
+			<return type="int" />
+			<description>
+				Total number of hair vertices, guide and follow strands included.
+			</description>
+		</method>
+		<method name="get_vertices_per_strand" qualifiers="const">
+			<return type="int" />
+			<description>
+				Vertices per strand as stored in the [code].tfx[/code] file (4, 8, 16, 32 or 64).
+			</description>
+		</method>
+		<method name="reset_positions">
+			<return type="void" />
+			<description>
+				Snaps the hair back to its rest pose over the next two frames. Call it after teleporting the character so the hair does not fly across the level.
+			</description>
+		</method>
+	</methods>
+	<members>
+		<member name="cast_hair_shadows" type="bool" setter="set_cast_hair_shadows" getter="get_cast_hair_shadows" default="false">
+			Whether the strands cast shadows. Off by default: a million ribbon triangles in every shadow cascade is the single most expensive thing the hair can do.
+		</member>
+		<member name="clamp_position_delta" type="float" setter="set_clamp_position_delta" getter="get_clamp_position_delta" default="20.0">
+			Maximum distance a vertex may move in one frame. Keeps the simulation from exploding after a very long frame.
+		</member>
+		<member name="collision_meshes" type="TressFXCollisionMesh[]" setter="set_collision_meshes" getter="get_collision_meshes" default="[]">
+			Signed distance fields the guide strands are pushed out of after every simulation step. Every listed mesh is applied every frame.
+		</member>
+		<member name="collision_skip_root_vertices" type="int" setter="set_collision_skip_root_vertices" getter="get_collision_skip_root_vertices" default="2">
+			Vertices at the root of each strand that never collide (the first two are pinned anyway). Raise it for grooms whose roots sit inside the collider: a strand pushed at its base every frame swings outwards as a whole.
+		</member>
+		<member name="damping" type="float" setter="set_damping" getter="get_damping" default="0.068">
+			Velocity damping per frame. The AMD sample uses 0.068; 0.2 brings fur fully to rest.
+		</member>
+		<member name="follow_radius" type="float" setter="set_follow_radius" getter="get_follow_radius" default="0.012">
+			Spread of the follow hairs around their guide strand, in metres. Changing it reloads the asset.
+		</member>
+		<member name="global_range" type="float" setter="set_global_range" getter="get_global_range" default="0.308">
+			Fraction of each strand, from the root, that the global shape constraint applies to.
+		</member>
+		<member name="global_stiffness" type="float" setter="set_global_stiffness" getter="get_global_stiffness" default="0.408">
+			How strongly the first [member global_range] of every strand is pulled back to the authored rest shape. Keeps a hairstyle's parting and volume; lower it for a tail that must swing as a mass.
+		</member>
+		<member name="gravity" type="float" setter="set_gravity" getter="get_gravity" default="0.09">
+			Gravity acceleration. The shape constraints are position based, so a strong gravity fights them and the hair never settles; the AMD sample uses 0.09, long hair around 1.
+		</member>
+		<member name="hair_skeleton" type="Skeleton3D" setter="set_hair_skeleton" getter="get_hair_skeleton">
+			Skeleton the hair is skinned to, using the bone names in [member tfxbone_path]. Without a skeleton the hair follows this node rigidly. Changing it reloads the asset.
+		</member>
+		<member name="import_scale" type="float" setter="set_import_scale" getter="get_import_scale" default="1.0">
+			Multiplies the [code].tfx[/code] positions on load; use 0.01 for an asset authored in centimetres. Changing it reloads the asset.
+		</member>
+		<member name="length_iterations" type="int" setter="set_length_iterations" getter="get_length_iterations" default="2">
+			Iterations of the segment length constraint per frame.
+		</member>
+		<member name="local_iterations" type="int" setter="set_local_iterations" getter="get_local_iterations" default="2">
+			Iterations of the local shape constraint per frame.
+		</member>
+		<member name="local_stiffness" type="float" setter="set_local_stiffness" getter="get_local_stiffness" default="0.908">
+			How strongly each segment keeps its authored bend relative to the previous one (curls, waves).
+		</member>
+		<member name="lod_enabled" type="bool" setter="set_lod_enabled" getter="get_lod_enabled" default="false">
+			Distance LOD: the strands are dealt into four meshes that fade out one by one between [member lod_start_distance] and [member lod_end_distance], while the remaining fibers widen by [member lod_width_multiplier] to keep the coverage.
+		</member>
+		<member name="lod_end_distance" type="float" setter="set_lod_end_distance" getter="get_lod_end_distance" default="5.0">
+			Distance at which only [member lod_percent] of the strands remain.
+		</member>
+		<member name="lod_percent" type="float" setter="set_lod_percent" getter="get_lod_percent" default="0.5">
+			Fraction of strands still drawn at [member lod_end_distance] and beyond (rounded to quarters).
+		</member>
+		<member name="lod_start_distance" type="float" setter="set_lod_start_distance" getter="get_lod_start_distance" default="1.0">
+			Distance at which strands start to drop out.
+		</member>
+		<member name="lod_width_multiplier" type="float" setter="set_lod_width_multiplier" getter="get_lod_width_multiplier" default="2.0">
+			Fiber width multiplier reached at [member lod_end_distance].
+		</member>
+		<member name="material" type="ShaderMaterial" setter="set_material" getter="get_material">
+			Material using [code]tressfx_strand.gdshader[/code]; colour, fiber radius and lighting live there. Without one a default material is created. Use one material per hair node: the node writes its simulated positions texture and vertex count into the material's shader parameters.
+		</member>
+		<member name="num_follow_hairs" type="int" setter="set_num_follow_hairs" getter="get_num_follow_hairs" default="0">
+			Follow strands generated around every guide strand. Follow strands are not simulated, they are offset copies of their guide, so they are almost free. Changing it reloads the asset.
+		</member>
+		<member name="tfx_path" type="String" setter="set_tfx_path" getter="get_tfx_path" default="&quot;&quot;">
+			The [code].tfx[/code] file with the guide strands (4 to 64 vertices per strand, a power of two). Changing it reloads the asset.
+		</member>
+		<member name="tfxbone_path" type="String" setter="set_tfxbone_path" getter="get_tfxbone_path" default="&quot;&quot;">
+			Optional [code].tfxbone[/code] file with the bone weights of every guide strand; bone names must exist in [member hair_skeleton]. Changing it reloads the asset.
+		</member>
+		<member name="tip_separation" type="float" setter="set_tip_separation" getter="get_tip_separation" default="0.0">
+			How much further the follow hairs spread towards the tip (0 keeps them parallel to their guide).
+		</member>
+		<member name="vsp_accel_threshold" type="float" setter="set_vsp_accel_threshold" getter="get_vsp_accel_threshold" default="1.208">
+			Root acceleration above which the velocity shock propagation coefficient is forced to 1 so a violent head move cannot pull the hair apart.
+		</member>
+		<member name="vsp_coeff" type="float" setter="set_vsp_coeff" getter="get_vsp_coeff" default="0.758">
+			Velocity shock propagation: how much of the root's rigid motion is copied onto the whole strand. High values make the hair a helmet, low values let it lag and swing.
+		</member>
+		<member name="wind_direction" type="Vector3" setter="set_wind_direction" getter="get_wind_direction" default="Vector3(1, 0, 0)">
+			Direction the wind blows towards.
+		</member>
+		<member name="wind_magnitude" type="float" setter="set_wind_magnitude" getter="get_wind_magnitude" default="0.0">
+			Wind acceleration, same units as [member gravity]; it gusts between half and one and a half times this value. Fur bends visibly around 1 to 3.
+		</member>
+	</members>
+</class>

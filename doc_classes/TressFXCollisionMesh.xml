@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="TressFXCollisionMesh" inherits="Node3D" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+		A mesh that [TressFXHair] strands are kept out of.
+	</brief_description>
+	<description>
+		Turns a mesh into a signed distance field on the GPU and rebuilds it whenever the mesh moves. The source is either a [code].tfxmesh[/code] file exported from Maya or any Godot [Mesh] (a [SphereMesh] or [CapsuleMesh] primitive, or a skinned mesh whose bone weights follow [member hair_skeleton]). Add the node to a hair's [member TressFXHair.collision_meshes] and the hair stays outside it.
+		Closed, evenly tessellated meshes work best: the distance field is only built in a narrow band around the surface, and open edges make hair kink along them. A body proxy of a few thousand triangles is plenty.
+		A hair groom's rest pose must lie outside its colliders; see [member TressFXHair.collision_skip_root_vertices] for grooms rooted inside the skin.
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="debug_print_distances">
+			<return type="void" />
+			<param index="0" name="points" type="PackedVector3Array" />
+			<description>
+				Debug helper: reads the whole distance field back from the GPU and prints the signed distance at the given world-space points.
+			</description>
+		</method>
+		<method name="get_cell_count" qualifiers="const">
+			<return type="int" />
+			<description>
+				Cells per axis of the distance field grid, padding included.
+			</description>
+		</method>
+		<method name="get_cpu_time_usec" qualifiers="const">
+			<return type="int" />
+			<description>
+				Main-thread time spent by this node in the last frame, in microseconds.
+			</description>
+		</method>
+		<method name="get_triangle_count" qualifiers="const">
+			<return type="int" />
+			<description>
+				Number of triangles in the loaded mesh.
+			</description>
+		</method>
+		<method name="get_vertex_count" qualifiers="const">
+			<return type="int" />
+			<description>
+				Number of vertices in the loaded mesh.
+			</description>
+		</method>
+	</methods>
+	<members>
+		<member name="collision_margin" type="float" setter="set_collision_margin" getter="get_collision_margin" default="0.0">
+			Hair is kept this many cells away from the surface. Keep it at 0 for hair rooted on the mesh; a hand pushing through fur can use 0.5.
+		</member>
+		<member name="follow_bone" type="String" setter="set_follow_bone" getter="get_follow_bone" default="&quot;&quot;">
+			Bone whose motion moves the distance field grid with the mesh (the root bone for a body, a forearm for a hand). Without one the grid follows this node.
+		</member>
+		<member name="hair_skeleton" type="Skeleton3D" setter="set_hair_skeleton" getter="get_hair_skeleton">
+			Skeleton driving the mesh. The bone names in a [code].tfxmesh[/code], or the bone weights of a skinned [member mesh], must belong to it. Changing it reloads the mesh.
+		</member>
+		<member name="import_scale" type="float" setter="set_import_scale" getter="get_import_scale" default="1.0">
+			Multiplies vertex positions on load; use 0.01 for an asset authored in centimetres. Changing it reloads the mesh.
+		</member>
+		<member name="mesh" type="Mesh" setter="set_mesh" getter="get_mesh">
+			Alternative to [member tfxmesh_path]: any mesh, first surface only. Bone weights are used when present. Changing it reloads the mesh.
+		</member>
+		<member name="num_cells_x" type="int" setter="set_num_cells_x" getter="get_num_cells_x" default="50">
+			Cells across the mesh's bounding cube; the grid is padded by 80% on every side, so the total is about 2.6 times this per axis. Finer grids cut resting jitter (50 to 80 cut it threefold on the AMD sample) at the cost of GPU memory and build time. Changing it reloads the mesh.
+		</member>
+		<member name="push_limit" type="float" setter="set_push_limit" getter="get_push_limit" default="1.0">
+			Most a hair vertex is pushed out per frame, in cells. Deep vertices emerge over a few frames instead of teleporting to the surface and flickering back; 0.25 is a good value for a body.
+		</member>
+		<member name="tfxmesh_path" type="String" setter="set_tfxmesh_path" getter="get_tfxmesh_path" default="&quot;&quot;">
+			A [code].tfxmesh[/code] collision mesh exported by the TressFX Maya exporter (bone names, skinned vertices and triangles). Changing it reloads the mesh.
+		</member>
+	</members>
+</class>

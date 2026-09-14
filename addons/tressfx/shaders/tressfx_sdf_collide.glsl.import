@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://cxhk4g58ixaey"
+path="res://.godot/imported/tressfx_sdf_collide.glsl-ec460970ba8bcd975120228cb9dc13e8.res"
+
+[deps]
+
+source_file="res://addons/tressfx/shaders/tressfx_sdf_collide.glsl"
+dest_files=["res://.godot/imported/tressfx_sdf_collide.glsl-ec460970ba8bcd975120228cb9dc13e8.res"]
+
+[params]
+
