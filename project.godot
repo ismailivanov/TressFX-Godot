@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="TressFX Godot"
-run/main_scene="res://addons/tressfx/demo/main.tscn"
+run/main_scene="res://addons/tressfx/demo/ponytail.tscn"
 config/features=PackedStringArray("4.7", "Forward Plus")
 
 [physics]

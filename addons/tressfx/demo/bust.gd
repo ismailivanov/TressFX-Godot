@@ -2,7 +2,8 @@ extends Node3D
 ## Bust demos (Sintel, Ruby ponytail) with TressFX hair. No skeleton: the bust node moves
 ## and the hair follows it as a single rigid bone.
 ## Idle: a slow look-around. Drag with the left mouse button to turn the bust yourself.
-## Flags (after `--`): --still, --no-collision, --gpu-timing, --jitter-check, --bench, --shot=<dir>
+## Flags (after `--`): --still, --no-collision, --gpu-timing, --jitter-check, --bench, --shot=<dir>,
+## --yaw=<degrees> (turn the bust, e.g. 90 for a profile view), --cam-dist=<m>
 
 @onready var bust: Node3D = $Bust
 
@@ -31,7 +32,10 @@ func _ready() -> void:
 	if "--gpu-timing" in args:
 		$StatsLayer/Stats.measure_gpu = true
 	for arg in args:
-		if arg.begins_with("--cam-dist="): # push the camera back along its view axis (LOD tests)
+		if arg.begins_with("--yaw="):
+			_drag_yaw = deg_to_rad(float(arg.get_slice("=", 1)))
+			bust.rotation.y = _drag_yaw
+		elif arg.begins_with("--cam-dist="): # push the camera back along its view axis (LOD tests)
 			var cam: Camera3D = $Camera3D
 			cam.position += -cam.global_transform.basis.z * -(float(arg.get_slice("=", 1)) - cam.position.z)
 

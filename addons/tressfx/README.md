@@ -143,14 +143,14 @@ builds; run the editor or game with `--verbose` to log asset loading.
 
 ## Demos
 
+- `addons/tressfx/demo/ponytail.tscn` AMD's TressFX 3.1 ponytail (Maya source converted with
+  `ma_to_tfx.py`) on the Ruby head, primitive colliders, no skeleton. Drag with the mouse to
+  turn the head.
 - `addons/tressfx/demo/main.tscn` AMD's RatBoy: fur and mohawk skinned to the animated skeleton, three SDF
   colliders from `.tfxmesh` files. Flags after `--`: `--no-fur`, `--no-mohawk`,
   `--no-collision`, `--no-sdf`, `--hide-hair`, `--no-anim`, `--wind=<f>`, `--bench` (with
   `--disable-vsync`), `--jitter-check` (prints the share of vertices that still jitter),
   `--shot=<dir>` (screenshots).
-- `addons/tressfx/demo/ponytail.tscn` AMD's TressFX 3.1 ponytail (Maya source converted with
-  `ma_to_tfx.py`) on the Ruby head, primitive colliders, no skeleton. Drag with the mouse to
-  turn the head.
 
 ## Not ported from TressFX
 

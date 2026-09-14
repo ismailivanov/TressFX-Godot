@@ -11,11 +11,11 @@ skinned to your animated `Skeleton3D`, kept out of the character's body with sig
 fields, and drawn as thin ribbons with proper hair lighting. It runs in the editor too, so you can
 tune a hairstyle while the animation plays.
 
+![Ponytail swinging as the head turns, kept out of the head and shoulders by distance-field colliders](screenshots/ponytail.png)
+
+### RatBoy
+
 ![RatBoy with 82,000 simulated fur and mohawk strands](screenshots/ratboy.png)
-
-### Ponytail
-
-![Ponytail hairstyle on a bust, colliding with head and shoulders](screenshots/ponytail.png)
 
 <sub>Both scenes ship with the addon. Captured on an RTX 4060 Ti at 1152x648 with MSAA 4x and TAA.</sub>
 
@@ -66,10 +66,10 @@ want them in your project.
 
 ## Demos
 
+- **Ponytail** (`addons/tressfx/demo/ponytail.tscn`, the project's main scene): the TressFX 3.1
+  ponytail on a bust with primitive colliders. Drag with the mouse to turn the head.
 - **RatBoy** (`addons/tressfx/demo/main.tscn`): AMD's own sample character with fur and a
   mohawk skinned to the animation, colliding with the body and both hands.
-- **Ponytail** (`addons/tressfx/demo/ponytail.tscn`): the TressFX 3.1 ponytail on a bust with
-  primitive colliders. Drag with the mouse to turn the head.
 
 Both scenes take command-line flags for benchmarks and jitter checks; they are listed at the
 top of `main.gd` and `bust.gd`.
