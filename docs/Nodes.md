@@ -141,3 +141,7 @@ cost of every TressFX node, strand and cell counts, and the triangles drawn this
 
 `positions`, `verts_per_strand`, `lod_start`, `lod_end` and `lod_width_multiplier` are written
 by the node; leave them alone.
+
+The shader renders with `depth_prepass_alpha`. For the alpha-to-coverage look of versions before
+0.2, duplicate it and change its `render_mode` line to
+`world_vertex_coords, cull_disabled, alpha_to_coverage, depth_draw_always` (needs MSAA 4x).

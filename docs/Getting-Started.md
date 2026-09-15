@@ -2,8 +2,8 @@
 
 ## 1. Install
 
-1. Copy the `addons/tressfx` folder into your project (or install the addon from the Asset
-   Library). There is no plugin to enable: Godot loads `addons/tressfx/tressfx.gdextension` on
+1. Copy the `addons/tressfx` folder into your project (or install the addon from the Godot Asset
+   Store). There is no plugin to enable: Godot loads `addons/tressfx/tressfx.gdextension` on
    its own.
 2. Restart the editor once so the compute shaders in `addons/tressfx/shaders` are imported.
 3. Check that it worked: open the *Create New Node* dialog and search for `TressFXHair`. If the
@@ -14,14 +14,14 @@ models). Delete that folder if you do not want it in your project.
 
 ## 2. Project settings
 
-The strands are rendered with alpha-to-coverage, which needs multisampling to produce soft edges,
-and temporal anti-aliasing to stop thin fibers from shimmering. In *Project Settings > Rendering >
-Anti Aliasing* set:
+Nothing is required. The strands are alpha-blended over a depth pre-pass, which gives soft edges
+with or without multisampling. Two settings in *Project Settings > Rendering > Anti Aliasing* are
+still worth knowing:
 
-- **MSAA 3D** to `4x` (2x only gives two coverage levels and looks stepped).
-- **Use TAA** on.
-
-Without these the hair reads as a mass of noisy lines, especially at 1080p and above.
+- **Use TAA** is recommended. Without it, strands thinner than a pixel flicker from frame to
+  frame.
+- **MSAA 3D** is optional. 4x softens the strand edges a little more and costs GPU time across
+  the whole scene; leave it off if your game does not use it.
 
 ## 3. Your first hair
 

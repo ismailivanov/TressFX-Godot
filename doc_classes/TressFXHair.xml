@@ -8,7 +8,7 @@
 		With a [member hair_skeleton] and a [code].tfxbone[/code] file the hair is skinned to the animated skeleton; without a skeleton it follows this node rigidly.
 		The node simulates in the editor too: move the skeleton or scrub its animation and the hair follows. When nothing has changed for a few seconds the editor simulation sleeps until the next change.
 		Requires the Forward+ or Mobile renderer (the Compatibility renderer has no [RenderingDevice]). Look and lighting settings live in a [ShaderMaterial] using [code]addons/tressfx/shaders/tressfx_strand.gdshader[/code], see [member material].
-		[b]Note:[/b] Use MSAA 4x together with TAA: the strands are rendered with alpha-to-coverage, and TAA turns the dithered edges into a soft volume.
+		[b]Note:[/b] The strands are alpha-blended over a depth pre-pass and need no MSAA. Turn on TAA to keep strands thinner than a pixel from flickering.
 	</description>
 	<tutorials>
 	</tutorials>

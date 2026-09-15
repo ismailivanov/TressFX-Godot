@@ -17,8 +17,11 @@ file.
   `--verbose` to see the load message with the strand count.
 - The hair is there but tiny or huge: the asset is in centimetres, set `import_scale` to 0.01.
 
-**The hair is a flat sheet, or looks like strings.**
-MSAA is off. Set *MSAA 3D* to 4x and turn on TAA in the project settings.
+**Thin strands flicker or look like noisy lines.**
+Turn on TAA (*Project Settings > Rendering > Anti Aliasing > Use TAA*). If your material uses a
+copy of the strand shader from a version before 0.2, it still renders with alpha-to-coverage,
+which needs MSAA 4x; switch to the current shader or change its `render_mode` to
+`world_vertex_coords, cull_disabled, depth_prepass_alpha`.
 
 **The hair stands on end or floats away from the head.**
 The rest pose sits inside a collider. Shrink the collider until it lies just inside the skin,

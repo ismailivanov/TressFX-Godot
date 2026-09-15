@@ -20,7 +20,7 @@ it collide with a character, tune it, and keep it fast.
 - The **Forward+** or **Mobile** renderer. The Compatibility renderer has no `RenderingDevice`
   and cannot run the compute shaders.
 - A GPU with Vulkan, Direct3D 12 or Metal support (anything that runs Forward+).
-- MSAA 4x and TAA turned on in the project (see [Getting Started](Getting-Started.md)).
+- No special project settings; TAA is recommended (see [Getting Started](Getting-Started.md)).
 
 ## How it works, in one paragraph
 

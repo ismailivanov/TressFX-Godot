@@ -1,10 +1,11 @@
 shader_type spatial;
-// alpha_to_coverage: no sorting or blending, MSAA turns the per-pixel coverage into soft
-// edges. Godot puts A2C materials in the transparent pass, which does not write depth, so
-// depth_draw_always is needed or strands never occlude each other and the hair looks x-rayed.
-// ponytail: TressFX uses ShortCut OIT here, needs custom render passes; revisit if this isn't
-// good enough.
-render_mode world_vertex_coords, cull_disabled, alpha_to_coverage, depth_draw_always;
+// Depth pre-pass alpha: the solid core of every strand (alpha >= 0.99) writes depth in Godot's
+// depth pre-pass, then the whole ribbon is alpha-blended on top. Overlapping strands accumulate
+// coverage, the hair looks right without MSAA, and it casts shadows. The soft edges are not
+// sorted; TressFX sorts them with its ShortCut/PPLL order-independent transparency (not ported).
+// Before 0.2 this was `alpha_to_coverage, depth_draw_always`, which needs MSAA 4x and casts no
+// visible hair shadows; a copy of this shader with that line brings the old look back.
+render_mode world_vertex_coords, cull_disabled, depth_prepass_alpha;
 
 // Set by TressFXHair: simulated vertices, xyz = world position, w = packed tangent.
 uniform sampler2D positions : filter_nearest;
@@ -106,9 +107,8 @@ void vertex() {
 }
 
 // Coverage across the ribbon: 1 inside the true strand, fading to 0 over the expand_pixels
-// outside it. (TressFX's ComputeCoverage ramps across the edge and multiplies by the strand
-// opacity; that suits its OIT accumulation, not alpha-to-coverage, where sub-pixel fibers
-// would round to nothing. base_color.a is therefore unused.)
+// outside it. (TressFX's ComputeCoverage also multiplies by a strand opacity for its OIT
+// accumulation; here the ramp alone is the alpha and base_color.a is unused.)
 void fragment() {
 	ALBEDO = v_color;
 	float dist = abs(v_side) * v_expanded;

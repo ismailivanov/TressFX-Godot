@@ -3,6 +3,7 @@ extends Node3D
 ## Flags (after `--`): --no-fur, --no-mohawk, --no-collision (keep SDFs, skip the response),
 ## --no-sdf (drop the collision meshes entirely), --hide-hair (simulate only), --no-anim, --sdf-check,
 ## --bench (run with `--disable-vsync`, prints average FPS over frames 60-300 and quits).
+## --no-aa turns MSAA and TAA off.
 
 @onready var anim: AnimationPlayer = $Ratboy/AnimationPlayer
 
@@ -82,6 +83,9 @@ func _jitter_check() -> void:
 
 func _ready() -> void:
 	var args := OS.get_cmdline_user_args()
+	if "--no-aa" in args: # the hair does not need MSAA or TAA
+		get_viewport().msaa_3d = Viewport.MSAA_DISABLED
+		get_viewport().use_taa = false
 	if "--no-fur" in args:
 		$Fur.queue_free()
 	if "--no-mohawk" in args:

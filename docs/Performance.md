@@ -17,15 +17,16 @@ multiplies the drawing cost, not the simulation cost.
 
 ## Measured
 
-RTX 4060 Ti, 1152x648, MSAA 4x, TAA, vsync off (`godot --disable-vsync -- --bench`):
+RTX 4060 Ti, 1152x648, vsync off, median of three runs (`godot --disable-vsync <scene> -- --bench`,
+add `--no-aa` for the last column):
 
-| Scene | Strands | ms/frame |
-|---|---|---|
-| RatBoy: fur + mohawk, 3 skinned colliders, 10 M cells, animated | 82,000 | 4.07 |
-| Ponytail: 2 nodes, 4 primitive colliders, 5.5 M cells | 20,000 | 1.78 |
+| Scene | Strands | MSAA 4x + TAA | No MSAA, no TAA |
+|---|---|---|---|
+| RatBoy: fur + mohawk, 3 skinned colliders, 10 M cells, animated | 82,000 | 4.17 ms | 3.42 ms |
+| Ponytail: 2 nodes, 4 primitive colliders, 5.5 M cells, turning | 20,000 | 2.42 ms | 2.08 ms |
 
-Breakdown on RatBoy: simulation 1.15 ms, distance field builds 0.92 ms, viewport draw 2.1 ms of
-which the hair is most, TressFX main-thread 0.05 ms. A single character with a 20,000-strand
+Breakdown on RatBoy: simulation 0.8 ms, distance field builds 0.9 ms, viewport draw 2.1 ms with
+MSAA 4x and 1.3 ms without, of which the hair is most, TressFX main-thread 0.1 ms. A single character with a 20,000-strand
 hairstyle costs about 1 to 2 ms on a mid-range GPU at 1080p.
 
 Loading: the 75,000-strand fur takes 40 ms, the 13,000-vertex body collider 13 ms.
@@ -55,8 +56,8 @@ shadow cascades or use a shadow-casting proxy.
 - **Unseen hair is free.** By default a hair stops simulating while it is hidden or outside the
   camera's view; `simulation_distance` also stops it beyond a distance. Both are per node, see
   [Nodes](Nodes.md). A crowd of characters therefore only pays for the ones on screen.
-- **MSAA.** The hair needs MSAA 4x to look right, and MSAA is a cost on the whole scene. If the
-  game does not already use it, that is the largest single cost the hair adds.
+- **MSAA is optional.** The hair does not need it. Turning MSAA 4x and TAA off saves 0.75 ms per
+  frame on the RatBoy demo; keep TAA if thin strands flicker without it.
 
 ## Memory
 

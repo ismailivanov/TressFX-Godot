@@ -34,7 +34,8 @@ tune a hairstyle while the animation plays.
 - **Colliders from any mesh.** A `CapsuleMesh`, a skinned body proxy, or a `.tfxmesh` from
   the Maya exporter. The distance field is rebuilt only when the collider actually moves.
 - **Hair that looks like hair.** Thin tips, per-strand colour variation, body-albedo roots,
-  Kajiya-Kay diffuse with two shifted Marschner highlights, distance LOD, optional shadows.
+  Kajiya-Kay diffuse with two shifted Marschner highlights, distance LOD, hair shadows. No MSAA
+  needed.
 - **Fast to iterate.** Loading a 75,000-strand groom takes about 40 ms, so every change in the
   Inspector is instant, and the editor simulation sleeps when nothing changes.
 - **Only pays for what you see.** Hair that is hidden, off screen or beyond a distance you set
@@ -51,7 +52,7 @@ tune a hairstyle while the animation plays.
 4. Give the hair a `ShaderMaterial` that uses `addons/tressfx/shaders/tressfx_strand.gdshader`.
    Colour, fiber width and lighting live in that material.
 
-Turn on MSAA 4x and TAA in the project settings; the strands rely on both to look smooth. The
+MSAA is not needed. TAA is worth turning on: it keeps strands thinner than a pixel from flickering. The
 [user guide](docs/Home.md) (also on the [wiki](https://github.com/ismailivanov/TressFX-Godot/wiki))
 covers the asset formats, every parameter, tuning recipes for fur, long hair and ponytails,
 performance and troubleshooting.
@@ -83,13 +84,15 @@ top of `main.gd` and `bust.gd`.
 
 Read this before deciding to ship it.
 
-- **Rendering needs MSAA 4x and TAA.** The strands are drawn with alpha-to-coverage instead of
-  TressFX's order-independent transparency (ShortCut and PPLL were not ported). Without MSAA
-  the hair looks like noisy lines; with it, close-ups still show dithered edges, and strands
-  thinner than a pixel rely on TAA to stop shimmering. MSAA is a cost on the whole scene.
-- **No hair self-shadowing.** The deep shadow map was not ported; a root-darkening term stands
-  in. `cast_hair_shadows` uses ordinary shadow maps and renders the hair once more per shadow
-  cascade (the ponytail demo goes from 0.67 to 2.5 million triangles per frame with it on).
+- **Strand edges are blended unsorted.** TressFX's order-independent transparency (ShortCut and
+  PPLL) was not ported. The solid core of every strand writes depth in a pre-pass and the soft
+  edges are alpha-blended over it without sorting, so where many semi-transparent edges cross,
+  their layering can be slightly off. MSAA is not needed; strands thinner than a pixel still rely
+  on TAA to stop flickering.
+- **No deep shadow map.** TressFX's soft, volumetric hair self-shadowing was not ported; a
+  root-darkening term stands in. `cast_hair_shadows` puts the hair into Godot's ordinary shadow
+  maps, which shades the skin under it, but renders the hair once more per shadow cascade (the
+  ponytail demo goes from 0.67 to 2.5 million triangles per frame with it on).
 - **Forward+ or Mobile renderer only.** There is no `RenderingDevice` under the Compatibility
   (OpenGL) renderer, so no fallback for old hardware or the web. Mobile is untested.
 - **Triangle counts are large by nature.** Every strand of `n` vertices is `2 (n - 1)`

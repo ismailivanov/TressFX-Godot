@@ -3,7 +3,8 @@ extends Node3D
 ## and the hair follows it as a single rigid bone.
 ## Idle: a slow look-around. Drag with the left mouse button to turn the bust yourself.
 ## Flags (after `--`): --still, --no-collision, --gpu-timing, --jitter-check, --bench, --shot=<dir>,
-## --yaw=<degrees> (turn the bust, e.g. 90 for a profile view), --cam-dist=<m>
+## --yaw=<degrees> (turn the bust, e.g. 90 for a profile view), --cam-dist=<m>, --no-aa (MSAA and
+## TAA off)
 
 @onready var bust: Node3D = $Bust
 
@@ -26,6 +27,9 @@ var _bench_t0 := 0
 func _ready() -> void:
 	_drag_yaw = bust.rotation.y # keep the yaw set in the scene
 	var args := OS.get_cmdline_user_args()
+	if "--no-aa" in args: # the hair does not need MSAA or TAA
+		get_viewport().msaa_3d = Viewport.MSAA_DISABLED
+		get_viewport().use_taa = false
 	if "--no-collision" in args:
 		for hair in get_tree().get_nodes_in_group("tressfx_hair"):
 			hair.collision_meshes.clear()

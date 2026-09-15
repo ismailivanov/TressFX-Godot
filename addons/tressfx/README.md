@@ -23,9 +23,8 @@ colliders and drawn as camera-facing ribbons with Marschner-style lighting.
   `RenderingDevice`).
 - Prebuilt binaries for Linux x86_64, Windows x86_64 and macOS. Other platforms build from
   source, see below.
-- MSAA 4x and TAA are strongly recommended (`rendering/anti_aliasing/quality/msaa_3d = 2`,
-  `use_taa = true`). The strands use alpha-to-coverage, and TAA turns the dithered edges into a
-  soft volume. Without it thin hair reads as noisy strings.
+- MSAA is not needed. TAA (`rendering/anti_aliasing/quality/use_taa`) is recommended: it keeps
+  strands thinner than a pixel from flickering.
 
 ## Installation
 
@@ -106,8 +105,12 @@ deep inside the body can still creep; a finer `num_cells_x` helps.
 
 ## Rendering
 
-- `alpha_to_coverage` plus MSAA instead of TressFX's ShortCut/PPLL order-independent
-  transparency: an opaque pass, no sorting.
+- Depth pre-pass alpha (`depth_prepass_alpha`) instead of TressFX's ShortCut/PPLL
+  order-independent transparency: the solid core of each strand writes depth, the soft edges are
+  blended on top without sorting. It works with or without MSAA. Versions before 0.2 used
+  alpha-to-coverage, which needed MSAA 4x and cast no visible hair shadows; a copy of the strand
+  shader with `render_mode world_vertex_coords, cull_disabled, alpha_to_coverage,
+  depth_draw_always;` brings that look back.
 - The deep hair shadow map is replaced by `root_shadow`, a root-darkening AO term in the material.
 - `cast_hair_shadows` is off by default; a million ribbon triangles in every shadow cascade is
   the single biggest cost the hair can add.
@@ -118,16 +121,17 @@ deep inside the body can still creep; a finer `num_cells_x` helps.
 
 ## Performance
 
-RTX 4060 Ti, 1152x648, MSAA 4x, TAA, vsync off (`godot --disable-vsync -- --bench`):
+RTX 4060 Ti, 1152x648, vsync off, median of three runs (`godot --disable-vsync <scene> -- --bench`,
+add `--no-aa` for the last column):
 
-| Scene | ms/frame |
-|---|---|
-| RatBoy: 82k strands, 3 skinned SDF colliders (10 M cells), animated | 4.07 |
-| Ponytail: 20k strands, 4 primitive colliders (5.5 M cells) | 1.78 |
+| Scene | MSAA 4x + TAA | No MSAA, no TAA |
+|---|---|---|
+| RatBoy: 82k strands, 3 skinned SDF colliders (10 M cells), animated | 4.17 ms | 3.42 ms |
+| Ponytail: 20k strands, 4 primitive colliders (5.5 M cells), turning | 2.42 ms | 2.08 ms |
 
-Breakdown on RatBoy (the `TressFXStats` overlay): hair simulation 1.15 ms GPU, SDF builds
-0.92 ms GPU, viewport draw 2.1 ms GPU of which the hair is most, TressFX main-thread cost
-0.05 ms. Only the draw scales with resolution. Loading: the 75k-strand fur takes 40 ms, the
+Breakdown on RatBoy (the `TressFXStats` overlay): hair simulation 0.8 ms GPU, SDF builds
+0.9 ms GPU, viewport draw 2.1 ms GPU with MSAA 4x and 1.3 ms without, of which the hair is most,
+TressFX main-thread cost 0.1 ms. Only the draw scales with resolution. Loading: the 75k-strand fur takes 40 ms, the
 13k-vertex body collider 13 ms.
 
 Static colliders are free: a `TressFXCollisionMesh` only rebuilds its distance field when its
@@ -161,13 +165,15 @@ builds; run the editor or game with `--verbose` to log asset loading.
 
 Read this before deciding to ship it.
 
-- **Rendering needs MSAA 4x and TAA.** The strands are drawn with alpha-to-coverage instead of
-  TressFX's order-independent transparency (ShortCut and PPLL were not ported). Without MSAA
-  the hair looks like noisy lines; with it, close-ups still show dithered edges, and strands
-  thinner than a pixel rely on TAA to stop shimmering. MSAA is a cost on the whole scene.
-- **No hair self-shadowing.** The deep shadow map was not ported; a root-darkening term stands
-  in. `cast_hair_shadows` uses ordinary shadow maps and renders the hair once more per shadow
-  cascade (the ponytail demo goes from 0.67 to 2.5 million triangles per frame with it on).
+- **Strand edges are blended unsorted.** TressFX's order-independent transparency (ShortCut and
+  PPLL) was not ported. The solid core of every strand writes depth in a pre-pass and the soft
+  edges are alpha-blended over it without sorting, so where many semi-transparent edges cross,
+  their layering can be slightly off. MSAA is not needed; strands thinner than a pixel still rely
+  on TAA to stop flickering.
+- **No deep shadow map.** TressFX's soft, volumetric hair self-shadowing was not ported; a
+  root-darkening term stands in. `cast_hair_shadows` puts the hair into Godot's ordinary shadow
+  maps, which shades the skin under it, but renders the hair once more per shadow cascade (the
+  ponytail demo goes from 0.67 to 2.5 million triangles per frame with it on).
 - **Forward+ or Mobile renderer only.** There is no `RenderingDevice` under the Compatibility
   (OpenGL) renderer, so no fallback for old hardware or the web. Mobile is untested.
 - **Triangle counts are large by nature.** Every strand of `n` vertices is `2 (n - 1)`
