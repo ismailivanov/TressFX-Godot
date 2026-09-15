@@ -13,13 +13,13 @@ tune a hairstyle while the animation plays.
 
 ![Ponytail swinging as the head turns, kept out of the head and shoulders by distance-field colliders](screenshots/ponytail.gif)
 
-<sub>Preview at reduced quality. [Watch the full-quality video](screenshots/ponytail.mp4) (1440p, 16 s).</sub>
+<sub>Preview at reduced quality. [Watch the full-quality video](screenshots/ponytail.mp4) (16 s).</sub>
 
 ### RatBoy
 
 ![RatBoy with 82,000 simulated fur and mohawk strands](screenshots/ratboy.png)
 
-<sub>Both scenes ship with the addon. Captured on an RTX 4060 Ti at 1152x648 with MSAA 4x and TAA.</sub>
+<sub>Both scenes ship with the addon. Captured on an RTX 4060 Ti with MSAA 4x and TAA; the video is a Movie Maker recording of the ponytail demo.</sub>
 
 ## Features
 
