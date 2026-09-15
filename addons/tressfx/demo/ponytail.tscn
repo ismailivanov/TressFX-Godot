@@ -67,16 +67,16 @@ transform = Transform3D(0.94, 0, -0.342, 0, 1, 0, 0.342, 0, 0.94, 0, 0, 0)
 
 [node name="Ponytail" parent="Bust" unique_id=1813656893 instance=ExtResource("2")]
 
-[node name="head" parent="Bust/Ponytail/OldRuby_head" parent_id_path=PackedInt32Array(1813656893, 687308147) index="2" unique_id=1635471044]
+[node name="head" parent="Bust/Ponytail/OldRuby_head" parent_id_path=PackedInt32Array(1813656893, 237333009) index="2" unique_id=1550237421]
 surface_material_override/0 = SubResource("face")
 
-[node name="jacket" parent="Bust/Ponytail/OldRuby_head" parent_id_path=PackedInt32Array(1813656893, 687308147) index="4" unique_id=1825837486]
+[node name="jacket" parent="Bust/Ponytail/OldRuby_head" parent_id_path=PackedInt32Array(1813656893, 237333009) index="4" unique_id=954404408]
 surface_material_override/0 = SubResource("jacket")
 
-[node name="eye_right" parent="Bust/Ponytail/OldRuby_head" parent_id_path=PackedInt32Array(1813656893, 687308147) index="5" unique_id=1935177210]
+[node name="eye_right" parent="Bust/Ponytail/OldRuby_head" parent_id_path=PackedInt32Array(1813656893, 237333009) index="5" unique_id=447257415]
 surface_material_override/0 = SubResource("eye")
 
-[node name="eye_left" parent="Bust/Ponytail/OldRuby_head" parent_id_path=PackedInt32Array(1813656893, 687308147) index="6" unique_id=974109951]
+[node name="eye_left" parent="Bust/Ponytail/OldRuby_head" parent_id_path=PackedInt32Array(1813656893, 237333009) index="6" unique_id=556969930]
 surface_material_override/0 = SubResource("eye")
 
 [node name="HairHead" type="TressFXHair" parent="Bust" unique_id=317080482 node_paths=PackedStringArray("collision_meshes")]
@@ -118,27 +118,48 @@ length_iterations = 3
 damping = 0.1
 gravity = 1.5
 
-[node name="HeadCollider" type="TressFXCollisionMesh" parent="Bust"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, -0.02)
+[node name="HeadCollider" type="TressFXCollisionMesh" parent="Bust" unique_id=237708816]
 mesh = SubResource("head_shape")
 num_cells_x = 48
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, -0.02)
 
-[node name="BackCollider" type="TressFXCollisionMesh" parent="Bust"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.83, -0.14)
+[node name="BackCollider" type="TressFXCollisionMesh" parent="Bust" unique_id=1935261956]
 mesh = SubResource("back_shape")
 num_cells_x = 40
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.83, -0.14)
+
 [node name="NeckCollider" type="TressFXCollisionMesh" parent="Bust" unique_id=1953188897]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.42, 0)
 mesh = SubResource("neck_shape")
 num_cells_x = 32
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.42, 0)
 
 [node name="TorsoCollider" type="TressFXCollisionMesh" parent="Bust" unique_id=2040632353]
-transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, -0.15, 0)
 mesh = SubResource("torso_shape")
 num_cells_x = 48
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, -0.15, 0)
 
 [node name="StatsLayer" type="CanvasLayer" parent="." unique_id=1915995647]
 
 [node name="Stats" type="TressFXStats" parent="StatsLayer" unique_id=562456617]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -560.0
+offset_top = 12.0
+offset_right = -12.0
+offset_bottom = 23.0
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.8)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 14
+text = "145 fps  6.9 ms/frame
+viewport draw: gpu 0.0 ms, cpu 0.0 ms
+hair sim gpu 0.0 ms | sdf build gpu 0.0 ms
+tressfx cpu 0.01 ms
+20224 strands (5056 guides), 323584 vertices
+4 colliders, 5.5 M sdf cells
+3.08 M triangles drawn this frame
+2x2, msaa off"
+horizontal_alignment = 2
 
 [editable path="Bust/Ponytail"]

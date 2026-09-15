@@ -11,7 +11,9 @@ skinned to your animated `Skeleton3D`, kept out of the character's body with sig
 fields, and drawn as thin ribbons with proper hair lighting. It runs in the editor too, so you can
 tune a hairstyle while the animation plays.
 
-![Ponytail swinging as the head turns, kept out of the head and shoulders by distance-field colliders](screenshots/ponytail.png)
+![Ponytail swinging as the head turns, kept out of the head and shoulders by distance-field colliders](screenshots/ponytail.gif)
+
+<sub>Preview at reduced quality. [Watch the full-quality video](screenshots/ponytail.mp4) (1440p, 16 s).</sub>
 
 ### RatBoy
 
