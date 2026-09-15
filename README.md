@@ -13,7 +13,11 @@ tune a hairstyle while the animation plays.
 
 ![Ponytail swinging as the head turns, kept out of the head and shoulders by distance-field colliders](screenshots/ponytail.gif)
 
-<sub>Preview at reduced quality. [Watch the full-quality video](screenshots/ponytail.mp4) (16 s).</sub>
+<sub>Preview at reduced quality. Watch the [full video on YouTube](https://www.youtube.com/watch?v=bkSciZ1YLp8) or the [demo recording](screenshots/ponytail.mp4) (16 s).</sub>
+
+### Video
+
+[![Real-time hair and fur for Godot 4, on YouTube](https://img.youtube.com/vi/bkSciZ1YLp8/maxresdefault.jpg)](https://www.youtube.com/watch?v=bkSciZ1YLp8)
 
 ### RatBoy
 
