@@ -129,6 +129,10 @@ Use `platform=windows` or `platform=macos arch=universal` on those systems. The 
 in `addons/tressfx/bin/`. The GitHub Actions workflow builds all three platforms and packages
 the addon on every push.
 
+## AI use
+
+An LLM was used in this project.
+
 ## Support
 
 If TressFX for Godot saves you time, you can support the work: [Buy me a coffee](https://buymeacoffee.com/carbon06).

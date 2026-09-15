@@ -7,8 +7,6 @@ compatibility_minimum = "4.7"
 
 linux.debug.x86_64 = "res://addons/tressfx/bin/libtressfx.linux.template_debug.x86_64.so"
 linux.release.x86_64 = "res://addons/tressfx/bin/libtressfx.linux.template_release.x86_64.so"
-linux.debug.arm64 = "res://addons/tressfx/bin/libtressfx.linux.template_debug.arm64.so"
-linux.release.arm64 = "res://addons/tressfx/bin/libtressfx.linux.template_release.arm64.so"
 windows.debug.x86_64 = "res://addons/tressfx/bin/libtressfx.windows.template_debug.x86_64.dll"
 windows.release.x86_64 = "res://addons/tressfx/bin/libtressfx.windows.template_release.x86_64.dll"
 macos.debug = "res://addons/tressfx/bin/libtressfx.macos.template_debug.framework"

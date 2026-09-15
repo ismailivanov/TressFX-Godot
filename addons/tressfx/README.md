@@ -196,6 +196,10 @@ sign uses vertex and edge pseudo-normals, only guide strands collide (follow str
 from them afterwards), and the push per frame is capped (`push_limit`). Capsule collision and the
 marching-cubes SDF visualisation were not ported either.
 
+## AI use
+
+An LLM was used in this project.
+
 ## License
 
 MIT. See `addons/tressfx/LICENSE.md` for the AMD TressFX and godot-cpp notices. The ponytail demo
