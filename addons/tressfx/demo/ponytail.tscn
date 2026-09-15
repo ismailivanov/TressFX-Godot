@@ -104,6 +104,7 @@ num_follow_hairs = 3
 tip_separation = 1.0
 import_scale = 0.01
 material = ExtResource("7")
+cast_hair_shadows = true
 lod_enabled = true
 lod_start_distance = 2.5
 lod_end_distance = 7.0
@@ -140,25 +141,5 @@ transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, -0.15, 0)
 [node name="StatsLayer" type="CanvasLayer" parent="." unique_id=1915995647]
 
 [node name="Stats" type="TressFXStats" parent="StatsLayer" unique_id=562456617]
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -560.0
-offset_top = 12.0
-offset_right = -12.0
-offset_bottom = 23.0
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.8)
-theme_override_constants/shadow_offset_x = 1
-theme_override_constants/shadow_offset_y = 1
-theme_override_font_sizes/font_size = 14
-text = "145 fps  6.9 ms/frame
-viewport draw: gpu 0.0 ms, cpu 0.0 ms
-hair sim gpu 0.0 ms | sdf build gpu 0.0 ms
-tressfx cpu 0.01 ms
-20224 strands (5056 guides), 323584 vertices
-4 colliders, 5.5 M sdf cells
-2.75 M triangles drawn this frame
-2x2, msaa off"
-horizontal_alignment = 2
 
 [editable path="Bust/Ponytail"]
