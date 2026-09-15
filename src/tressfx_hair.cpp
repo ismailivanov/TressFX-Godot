@@ -3,7 +3,9 @@
 #include "tressfx_hair.h"
 
 #include <godot_cpp/classes/array_mesh.hpp>
+#include <godot_cpp/classes/camera3d.hpp>
 #include <godot_cpp/classes/engine.hpp>
+#include <godot_cpp/classes/image.hpp>
 #include <godot_cpp/classes/rd_shader_file.hpp>
 #include <godot_cpp/classes/rd_texture_format.hpp>
 #include <godot_cpp/classes/rd_texture_view.hpp>
@@ -11,6 +13,7 @@
 #include <godot_cpp/classes/resource_loader.hpp>
 #include <godot_cpp/classes/shader.hpp>
 #include <godot_cpp/classes/time.hpp>
+#include <godot_cpp/classes/viewport.hpp>
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
@@ -249,7 +252,21 @@ void TressFXHair::_step(double p_delta) {
 	}
 	const bool editor = Engine::get_singleton()->is_editor_hint();
 	Skeleton3D *skeleton = skin.get_skeleton();
-	const Vector3 center = to_local(skeleton != nullptr ? skeleton->get_global_position() : get_global_position());
+	const Transform3D anchor = skeleton != nullptr ? skeleton->get_global_transform() : get_global_transform();
+	const Vector3 center_world = anchor.xform(bound_center);
+	const Vector3 center = to_local(center_world);
+
+	// Hidden, off screen or far away: nothing to simulate for. After a long sleep the character
+	// may be somewhere else entirely, so snap to the rest pose instead of flying there.
+	if (!_should_simulate(center_world)) {
+		skipped_frames++;
+		last_cpu_usec = Time::get_singleton()->get_ticks_usec() - t0;
+		return;
+	}
+	if (skipped_frames > 60) {
+		frame = 0;
+	}
+	skipped_frames = 0;
 
 	skin.update(get_global_transform());
 	const PackedByteArray bones = skin.pack();
@@ -281,6 +298,7 @@ void TressFXHair::_step(double p_delta) {
 		// get_validated_object: a collider freed with queue_free() may still be listed here.
 		TressFXCollisionMesh *mesh = Object::cast_to<TressFXCollisionMesh>(collision_meshes[i].get_validated_object());
 		if (mesh != nullptr && mesh->_get_gpu() != nullptr) {
+			mesh->_mark_used();
 			colliders.push_back((int64_t)mesh->_get_gpu());
 		}
 	}
@@ -288,6 +306,35 @@ void TressFXHair::_step(double p_delta) {
 			callable_mp_static(&TressFXHairGPU::simulate).bind((int64_t)gpu, params, bones, colliders));
 	frame++;
 	last_cpu_usec = Time::get_singleton()->get_ticks_usec() - t0;
+}
+
+bool TressFXHair::_should_simulate(const Vector3 &p_center) const {
+	if (!simulate_offscreen && !is_visible_in_tree()) {
+		return false;
+	}
+	if (simulate_offscreen && simulation_distance <= 0.0f) {
+		return true;
+	}
+	Viewport *viewport = get_viewport();
+	Camera3D *camera = viewport != nullptr ? viewport->get_camera_3d() : nullptr;
+	if (camera == nullptr) {
+		return true;
+	}
+	const float r = bound_radius;
+	if (simulation_distance > 0.0f && camera->get_global_position().distance_to(p_center) - r > simulation_distance) {
+		return false;
+	}
+	if (!simulate_offscreen) {
+		// Bounding sphere against the frustum; the planes face outwards.
+		const TypedArray<Plane> frustum = camera->get_frustum();
+		for (int i = 0; i < frustum.size(); i++) {
+			const Plane plane = frustum[i];
+			if (plane.distance_to(p_center) > r) {
+				return false;
+			}
+		}
+	}
+	return true;
 }
 
 bool TressFXHair::_inputs_changed(const PackedByteArray &p_params, const PackedByteArray &p_bones) {
@@ -312,7 +359,7 @@ void TressFXHair::_load() {
 	if (!tfxbone_path.is_empty() && skin.get_skeleton() != nullptr) {
 		asset.load_bone_data(tfxbone_path, skin);
 	}
-	bound_radius = asset.rest_radius() * 1.3f + 0.5f;
+	bound_radius = asset.rest_bounds(bound_center) * 1.3f + 0.5f; // Slack for the animation.
 	while ((int)mesh_instances.size() < LOD_BUCKETS) {
 		MeshInstance3D *mi = memnew(MeshInstance3D);
 		add_child(mi, false, Node::INTERNAL_MODE_FRONT);
@@ -360,6 +407,7 @@ void TressFXHair::_init_gpu() {
 	gpu = g;
 	texture_bound = false;
 	idle_frames = 0;
+	skipped_frames = 0;
 	last_params = PackedByteArray();
 	last_bones = PackedByteArray();
 	RenderingServer::get_singleton()->call_on_render_thread(callable_mp_static(&TressFXHairGPU::init).bind((int64_t)g));
@@ -387,6 +435,7 @@ void TressFXHair::_apply_material() {
 		active_material->set_shader(ResourceLoader::get_singleton()->load(STRAND_SHADER_PATH));
 	}
 	active_material->set_shader_parameter("positions", texture);
+	active_material->set_shader_parameter("strand_uvs", strand_uv_texture);
 	active_material->set_shader_parameter("verts_per_strand", asset.num_verts_per_strand);
 	for (MeshInstance3D *mi : mesh_instances) {
 		mi->set_material_override(active_material);
@@ -423,57 +472,53 @@ GeometryInstance3D::ShadowCastingSetting TressFXHair::_shadow_setting() const {
 	return cast_hair_shadows ? GeometryInstance3D::SHADOW_CASTING_SETTING_ON : GeometryInstance3D::SHADOW_CASTING_SETTING_OFF;
 }
 
-// Two ribbon vertices per hair vertex (left/right), quads between consecutive ones. The real
-// positions come from the texture; UV.x = global vertex index, UV.y = side, UV2 = strand texture
-// coordinate. Strand s goes to LOD bucket s % LOD_BUCKETS, so every bucket is a uniform subset.
+// Two ribbon vertices per hair vertex (left/right), quads between consecutive ones. The mesh
+// carries no attributes at all: the strand shader derives the hair vertex, the side and the strand
+// from VERTEX_ID and the per-instance `lod_bucket`. Strand s goes to LOD bucket s % LOD_BUCKETS,
+// so every bucket is a uniform subset. Strand texture coordinates travel in a small texture.
 void TressFXHair::_make_meshes() {
 	const int n = asset.num_verts_per_strand;
-	const float *strand_uv = asset.strand_uv.ptr();
 	for (int b = 0; b < LOD_BUCKETS; b++) {
 		const int strands = (asset.num_total_strands - b + LOD_BUCKETS - 1) / LOD_BUCKETS;
 		PackedVector3Array verts;
-		verts.resize(strands * n * 2);
-		PackedVector2Array uv;
-		uv.resize(strands * n * 2);
-		PackedVector2Array uv2;
-		uv2.resize(strands * n * 2);
+		verts.resize(strands * n * 2); // Zeros; the real positions come from the texture.
 		PackedInt32Array index;
 		index.resize(strands * (n - 1) * 6);
-		Vector2 *uvw = uv.ptrw();
-		Vector2 *uv2w = uv2.ptrw();
 		int32_t *iw = index.ptrw();
 		int c = 0;
 		for (int k = 0; k < strands; k++) {
-			const int s = b + k * LOD_BUCKETS;
-			const Vector2 suv(strand_uv[s * 2], strand_uv[s * 2 + 1]);
-			for (int j = 0; j < n; j++) {
+			for (int j = 0; j < n - 1; j++) {
 				const int lv = (k * n + j) * 2; // Local ribbon vertex pair.
-				uvw[lv] = Vector2((float)(s * n + j), -1.0f);
-				uvw[lv + 1] = Vector2((float)(s * n + j), 1.0f);
-				uv2w[lv] = suv;
-				uv2w[lv + 1] = suv;
-				if (j < n - 1) { // Same index pattern as upstream FillTriangleIndexArray.
-					iw[c] = lv;
-					iw[c + 1] = lv + 1;
-					iw[c + 2] = lv + 2;
-					iw[c + 3] = lv + 2;
-					iw[c + 4] = lv + 1;
-					iw[c + 5] = lv + 3;
-					c += 6;
-				}
+				// Same index pattern as upstream FillTriangleIndexArray.
+				iw[c] = lv;
+				iw[c + 1] = lv + 1;
+				iw[c + 2] = lv + 2;
+				iw[c + 3] = lv + 2;
+				iw[c + 4] = lv + 1;
+				iw[c + 5] = lv + 3;
+				c += 6;
 			}
 		}
 		Array arrays;
 		arrays.resize(Mesh::ARRAY_MAX);
 		arrays[Mesh::ARRAY_VERTEX] = verts;
-		arrays[Mesh::ARRAY_TEX_UV] = uv;
-		arrays[Mesh::ARRAY_TEX_UV2] = uv2;
 		arrays[Mesh::ARRAY_INDEX] = index;
 		Ref<ArrayMesh> mesh;
 		mesh.instantiate();
 		mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, arrays);
 		mesh_instances[b]->set_mesh(mesh);
+		mesh_instances[b]->set_instance_shader_parameter("lod_bucket", b);
 	}
+
+	// One RG32F texel per strand, wrapped like the positions texture.
+	const int strands = asset.num_total_strands;
+	const int w = MIN(strands, TRESSFX_TEXTURE_WIDTH);
+	const int h = (strands + w - 1) / w;
+	PackedByteArray uv_data;
+	uv_data.resize(w * h * 2 * sizeof(float));
+	uv_data.fill(0);
+	memcpy(uv_data.ptrw(), asset.strand_uv.ptr(), (size_t)strands * 2 * sizeof(float));
+	strand_uv_texture = ImageTexture::create_from_image(Image::create_from_data(w, h, false, Image::FORMAT_RGF, uv_data));
 }
 
 // Matches the std140 `Params` block in tressfx_sim.glsl.
@@ -816,6 +861,22 @@ float TressFXHair::get_clamp_position_delta() const {
 	return clamp_position_delta;
 }
 
+void TressFXHair::set_simulation_distance(float p_distance) {
+	simulation_distance = MAX(0.0f, p_distance);
+}
+
+float TressFXHair::get_simulation_distance() const {
+	return simulation_distance;
+}
+
+void TressFXHair::set_simulate_offscreen(bool p_enabled) {
+	simulate_offscreen = p_enabled;
+}
+
+bool TressFXHair::get_simulate_offscreen() const {
+	return simulate_offscreen;
+}
+
 void TressFXHair::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_tfx_path", "path"), &TressFXHair::set_tfx_path);
 	ClassDB::bind_method(D_METHOD("get_tfx_path"), &TressFXHair::get_tfx_path);
@@ -876,6 +937,10 @@ void TressFXHair::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_wind_magnitude"), &TressFXHair::get_wind_magnitude);
 	ClassDB::bind_method(D_METHOD("set_clamp_position_delta", "value"), &TressFXHair::set_clamp_position_delta);
 	ClassDB::bind_method(D_METHOD("get_clamp_position_delta"), &TressFXHair::get_clamp_position_delta);
+	ClassDB::bind_method(D_METHOD("set_simulation_distance", "distance"), &TressFXHair::set_simulation_distance);
+	ClassDB::bind_method(D_METHOD("get_simulation_distance"), &TressFXHair::get_simulation_distance);
+	ClassDB::bind_method(D_METHOD("set_simulate_offscreen", "enabled"), &TressFXHair::set_simulate_offscreen);
+	ClassDB::bind_method(D_METHOD("get_simulate_offscreen"), &TressFXHair::get_simulate_offscreen);
 
 	ClassDB::bind_method(D_METHOD("reset_positions"), &TressFXHair::reset_positions);
 	ClassDB::bind_method(D_METHOD("get_strand_count"), &TressFXHair::get_strand_count);
@@ -921,6 +986,10 @@ void TressFXHair::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "wind_direction"), "set_wind_direction", "get_wind_direction");
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "wind_magnitude"), "set_wind_magnitude", "get_wind_magnitude");
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "clamp_position_delta"), "set_clamp_position_delta", "get_clamp_position_delta");
+
+	ADD_GROUP("Culling", "");
+	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "simulation_distance", PROPERTY_HINT_RANGE, "0,100,0.5,or_greater,suffix:m"), "set_simulation_distance", "get_simulation_distance");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "simulate_offscreen"), "set_simulate_offscreen", "get_simulate_offscreen");
 }
 
 } // namespace godot

@@ -65,6 +65,7 @@ class TressFXCollisionMesh : public Node3D {
 	TressFXCollisionGPU *gpu = nullptr;
 	PackedByteArray last_bones;
 	PackedByteArray last_params;
+	uint64_t last_used_frame = 0;
 	uint64_t last_cpu_usec = 0;
 
 	void _load();
@@ -107,6 +108,8 @@ public:
 
 	// Main-thread handle of the render-thread state; null until loaded.
 	TressFXCollisionGPU *_get_gpu() const { return gpu; }
+	// Called by every TressFXHair that simulates against this mesh; unused meshes are not rebuilt.
+	void _mark_used();
 
 	TressFXCollisionMesh();
 };

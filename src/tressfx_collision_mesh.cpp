@@ -176,6 +176,12 @@ void TressFXCollisionMesh::_step() {
 	if (num_vertices == 0 || gpu == nullptr) {
 		return;
 	}
+	// No hair simulated against this field last frame (they sleep when idle, hidden or far away):
+	// nothing to rebuild. Hairs run after colliders, so last frame's mark is the freshest.
+	if (last_used_frame + 1 < Engine::get_singleton()->get_process_frames()) {
+		last_cpu_usec = 0;
+		return;
+	}
 	const uint64_t t0 = Time::get_singleton()->get_ticks_usec();
 	skin.update(get_global_transform());
 	// Upstream GetBoundingBox: the rest bounds moved by the follow bone (bone 0 = root, or this
@@ -553,6 +559,10 @@ void TressFXCollisionMesh::_build_adjacency() {
 			}
 		}
 	}
+}
+
+void TressFXCollisionMesh::_mark_used() {
+	last_used_frame = Engine::get_singleton()->get_process_frames();
 }
 
 void TressFXCollisionMesh::debug_print_distances(const PackedVector3Array &p_points) {

@@ -8,7 +8,13 @@ render_mode world_vertex_coords, cull_disabled, alpha_to_coverage, depth_draw_al
 
 // Set by TressFXHair: simulated vertices, xyz = world position, w = packed tangent.
 uniform sampler2D positions : filter_nearest;
+// Set by TressFXHair: one texel per strand, its texture coordinate on the body albedo.
+uniform sampler2D strand_uvs : filter_nearest;
 uniform int verts_per_strand = 8;
+// Set by TressFXHair per mesh instance: strands are dealt into LOD_BUCKETS meshes, strand k of
+// mesh b is global strand b + k * LOD_BUCKETS.
+instance uniform int lod_bucket = 0;
+const int LOD_BUCKETS = 4;
 
 // TressFXStrandParameters / TressFXParameters (defaults from TressFXSettings.h).
 uniform sampler2D base_albedo : source_color, hint_default_white, filter_linear_mipmap;
@@ -54,10 +60,13 @@ vec3 unpack_tangent(float p) {
 	return normalize(n);
 }
 
-// TressFXStrands.hlsl GetExpandedTressFXVert. UV.x = global vertex index, UV.y = side,
-// UV2 = strand texture coordinate.
+// TressFXStrands.hlsl GetExpandedTressFXVert. The mesh has no attributes: two ribbon vertices
+// per hair vertex, so VERTEX_ID gives the hair vertex, the side and (with lod_bucket) the strand.
 void vertex() {
-	int gi = int(UV.x);
+	int hair_vertex = VERTEX_ID >> 1;
+	int strand = lod_bucket + (hair_vertex / verts_per_strand) * LOD_BUCKETS;
+	int gi = strand * verts_per_strand + hair_vertex % verts_per_strand;
+	float side = float(VERTEX_ID & 1) * 2.0 - 1.0;
 	int w = textureSize(positions, 0).x;
 	vec4 d = texelFetch(positions, ivec2(gi % w, gi / w), 0);
 	vec3 p = d.xyz;
@@ -80,17 +89,18 @@ void vertex() {
 	v_half_width = max(0.5 * length(s1 - s0), 1e-4);
 	float px = r / v_half_width; // world-space size of one pixel here
 	v_expanded = v_half_width + expand_pixels;
-	v_side = UV.y;
-	VERTEX = p + right * UV.y * v_expanded * px;
+	v_side = side;
+	VERTEX = p + right * side * v_expanded * px;
 	NORMAL = normalize(cross(right, t));
 	v_tangent = (VIEW_MATRIX * vec4(t, 0.0)).xyz;
 
 	// GetStrandColor: body albedo at the strand root, optional tip colour.
-	vec3 root_color = textureLod(base_albedo, UV2, 0.0).rgb * base_color.rgb;
+	int wu = textureSize(strand_uvs, 0).x;
+	vec2 strand_uv = texelFetch(strand_uvs, ivec2(strand % wu, strand / wu), 0).xy;
+	vec3 root_color = textureLod(base_albedo, strand_uv, 0.0).rgb * base_color.rgb;
 	v_color = v_t > 1.0 - tip_percentage ? mix(root_color, tip_color.rgb, v_t) : root_color;
-	float strand = float(gi / verts_per_strand);
-	float h1 = fract(sin(strand * 12.9898) * 43758.5453);
-	float h2 = fract(sin(strand * 78.233) * 43758.5453);
+	float h1 = fract(sin(float(strand) * 12.9898) * 43758.5453);
+	float h2 = fract(sin(float(strand) * 78.233) * 43758.5453);
 	v_color *= 1.0 + color_variation * (h1 - 0.5) * 1.4;
 	v_color *= mix(vec3(1.0), vec3(1.0 + (h2 - 0.5) * 0.3, 1.0, 1.0 - (h2 - 0.5) * 0.3), color_variation);
 }

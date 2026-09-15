@@ -50,14 +50,19 @@ shadow cascades or use a shadow-casting proxy.
   change.
 - **Coarser colliders where it does not show.** `num_cells_x` 32 for hands, 48 for a head. The
   build cost is per cell (cubic) and per triangle.
-- **Static colliders are free.** A collider that does not move is not rebuilt.
+- **Static colliders are free.** A collider that does not move is not rebuilt, and neither is
+  one that no hair used in the previous frame.
+- **Unseen hair is free.** By default a hair stops simulating while it is hidden or outside the
+  camera's view; `simulation_distance` also stops it beyond a distance. Both are per node, see
+  [Nodes](Nodes.md). A crowd of characters therefore only pays for the ones on screen.
 - **MSAA.** The hair needs MSAA 4x to look right, and MSAA is a cost on the whole scene. If the
   game does not already use it, that is the largest single cost the hair adds.
 
 ## Memory
 
-Per hair node, roughly: the vertex buffers of the ribbons (28 bytes per ribbon vertex, two per
-hair vertex), the index buffer (24 bytes per hair vertex), and the simulation buffers (about 80
-bytes per hair vertex). The RatBoy fur with 604,000 vertices takes about 100 MB of GPU memory; a
-typical 20,000-strand hairstyle of 16 vertices takes 30 to 35 MB. Colliders take 4 bytes per
+Per hair node, roughly: the ribbon vertex buffer (12 bytes per ribbon vertex, two per hair
+vertex; the ribbons carry no attributes, everything is derived from the vertex index), the index
+buffer (24 bytes per hair vertex), the positions texture (16 bytes per hair vertex) and the
+simulation buffers (about 80 bytes per hair vertex). The RatBoy fur with 604,000 vertices takes
+about 85 MB of GPU memory; a typical 20,000-strand hairstyle of 16 vertices takes about 30 MB. Colliders take 4 bytes per
 distance field cell (36 MB at `num_cells_x` 80).

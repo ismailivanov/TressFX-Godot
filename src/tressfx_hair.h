@@ -7,6 +7,7 @@
 #include "tressfx_gpu.h"
 #include "tressfx_skin.h"
 
+#include <godot_cpp/classes/image_texture.hpp>
 #include <godot_cpp/classes/mesh_instance3d.hpp>
 #include <godot_cpp/classes/node3d.hpp>
 #include <godot_cpp/classes/shader_material.hpp>
@@ -87,6 +88,8 @@ class TressFXHair : public Node3D {
 	Vector3 wind_direction = Vector3(1, 0, 0);
 	float wind_magnitude = 0.0f;
 	float clamp_position_delta = 20.0f;
+	float simulation_distance = 0.0f;
+	bool simulate_offscreen = false;
 
 	TressFXAsset asset;
 	bool loaded = false;
@@ -95,12 +98,15 @@ class TressFXHair : public Node3D {
 	Ref<Texture2DRD> texture;
 	bool texture_bound = false;
 	Ref<ShaderMaterial> active_material;
+	Ref<ImageTexture> strand_uv_texture; // One texel per strand: its coordinate on the body albedo.
 	LocalVector<MeshInstance3D *> mesh_instances; // One per LOD bucket, internal children.
 	int frame = 0;
 	int idle_frames = 0;
+	int skipped_frames = 0;
 	PackedByteArray last_params;
 	PackedByteArray last_bones;
 	Vector3 last_center;
+	Vector3 bound_center; // Rest-pose centroid in skeleton (or node) space.
 	float bound_radius = 1.0f;
 	uint64_t last_cpu_usec = 0;
 
@@ -115,6 +121,7 @@ class TressFXHair : public Node3D {
 	PackedByteArray _pack_params(float p_delta) const;
 	void _wind_corners(float *r_out) const;
 	bool _inputs_changed(const PackedByteArray &p_params, const PackedByteArray &p_bones);
+	bool _should_simulate(const Vector3 &p_center) const;
 	GeometryInstance3D::ShadowCastingSetting _shadow_setting() const;
 
 protected:
@@ -181,6 +188,10 @@ public:
 	float get_wind_magnitude() const;
 	void set_clamp_position_delta(float p_value);
 	float get_clamp_position_delta() const;
+	void set_simulation_distance(float p_distance);
+	float get_simulation_distance() const;
+	void set_simulate_offscreen(bool p_enabled);
+	bool get_simulate_offscreen() const;
 
 	void reset_positions();
 	int get_strand_count() const;

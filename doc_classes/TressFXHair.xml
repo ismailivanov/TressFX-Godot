@@ -126,6 +126,12 @@
 		<member name="num_follow_hairs" type="int" setter="set_num_follow_hairs" getter="get_num_follow_hairs" default="0">
 			Follow strands generated around every guide strand. Follow strands are not simulated, they are offset copies of their guide, so they are almost free. Changing it reloads the asset.
 		</member>
+		<member name="simulate_offscreen" type="bool" setter="set_simulate_offscreen" getter="get_simulate_offscreen" default="false">
+			Keep simulating while the hair is hidden or outside the current camera's view. Off by default: hair nobody can see sleeps, and colliders no hair used last frame are not rebuilt. After a long sleep the hair snaps to its rest pose instead of flying to the character's new position.
+		</member>
+		<member name="simulation_distance" type="float" setter="set_simulation_distance" getter="get_simulation_distance" default="0.0">
+			Distance from the camera beyond which the hair stops simulating, in metres (0 = never). Combine with [member lod_enabled]: far away hair is drawn with fewer strands and frozen in its last pose.
+		</member>
 		<member name="tfx_path" type="String" setter="set_tfx_path" getter="get_tfx_path" default="&quot;&quot;">
 			The [code].tfx[/code] file with the guide strands (4 to 64 vertices per strand, a power of two). Changing it reloads the asset.
 		</member>

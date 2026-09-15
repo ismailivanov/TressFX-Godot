@@ -30,8 +30,8 @@ struct TressFXAsset {
 	bool load(const String &p_path, int p_num_follow_hairs, float p_tip_separation, float p_scale, float p_follow_radius);
 	// Loads a .tfxbone (upstream LoadBoneData) into bone_skinning; bone names are looked up in p_skin.
 	bool load_bone_data(const String &p_path, const TressFXSkin &p_skin);
-	// Farthest rest vertex from the origin, sampled (for the culling bounds).
-	float rest_radius() const;
+	// Bounding sphere of the rest pose, sampled: centre in model space, returns the radius.
+	float rest_bounds(Vector3 &r_center) const;
 
 private:
 	bool _load_hair_data(const String &p_path);

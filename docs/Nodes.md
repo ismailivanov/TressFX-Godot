@@ -57,6 +57,16 @@ All simulation parameters apply immediately, in the editor and at runtime.
 | `wind_magnitude` | `0.0` | Wind acceleration, gusting between 0.5x and 1.5x. |
 | `clamp_position_delta` | `20.0` | Maximum distance a vertex may move in one frame. |
 
+### Culling
+
+| Property | Default | Meaning |
+|---|---|---|
+| `simulation_distance` | `0.0` | Beyond this distance from the camera the hair stops simulating (0 = never). |
+| `simulate_offscreen` | `false` | Keep simulating while hidden or outside the camera's view. Off: unseen hair sleeps, and colliders no hair used last frame are not rebuilt. |
+
+After a sleep longer than a second the hair snaps to its rest pose when it wakes, so a character
+that moved while unseen does not have its hair fly across the level.
+
 ### Methods
 
 | Method | Meaning |
@@ -95,8 +105,8 @@ Inherits `Node3D`. A mesh turned into a signed distance field every frame it mov
 | `debug_print_distances(points)` | Debug: read the field back and print the distance at the given world points. |
 
 The node is in the `tressfx_collision` group while it is in the tree. Its distance field is only
-rebuilt on frames where its pose changed, so a static collider costs nothing after the first
-frame.
+rebuilt on frames where its pose changed and some hair simulated against it in the previous
+frame, so a static collider, or one whose hair is asleep, costs nothing.
 
 ## TressFXStats
 

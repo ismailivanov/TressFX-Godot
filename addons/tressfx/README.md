@@ -53,6 +53,9 @@ colliders and drawn as camera-facing ribbons with Marschner-style lighting.
 5. Optional: drop a `TressFXStats` label under a `CanvasLayer` for an on-screen performance
    readout.
 
+The ribbon meshes carry no attributes; the strand shader derives everything from the vertex index,
+which keeps GPU memory at about 12 bytes per ribbon vertex.
+
 Everything in the Inspector applies immediately; the properties that need the asset rebuilt
 (`tfx_path`, `tfxbone_path`, `hair_skeleton`, `num_follow_hairs`, `follow_radius`,
 `import_scale`) reload it in a few milliseconds.
@@ -128,7 +131,9 @@ Breakdown on RatBoy (the `TressFXStats` overlay): hair simulation 1.15 ms GPU, S
 13k-vertex body collider 13 ms.
 
 Static colliders are free: a `TressFXCollisionMesh` only rebuilds its distance field when its
-pose changes.
+pose changes and a hair used it in the previous frame. Hair that is hidden, outside the camera's
+view or farther than `simulation_distance` stops simulating (`simulate_offscreen` keeps it
+running).
 
 ## Editor
 

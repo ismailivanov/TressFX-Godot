@@ -97,6 +97,7 @@ func _ready() -> void:
 	if "--hide-hair" in args: # simulate but don't draw
 		for hair in [$Mohawk, $Fur]:
 			hair.visible = false
+			hair.simulate_offscreen = true
 	for arg in args:
 		if arg.begins_with("--wind="):
 			for hair in [$Mohawk, $Fur]:

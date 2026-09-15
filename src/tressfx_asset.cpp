@@ -222,11 +222,18 @@ void TressFXAsset::_process() {
 	}
 }
 
-float TressFXAsset::rest_radius() const {
-	float r2 = 0.0f;
+float TressFXAsset::rest_bounds(Vector3 &r_center) const {
 	const float *pos = positions.ptr();
+	Vector3 sum;
+	int count = 0;
 	for (int i = 0; i < num_total_vertices; i += 16) {
-		r2 = MAX(r2, Vector3(pos[i * 4], pos[i * 4 + 1], pos[i * 4 + 2]).length_squared());
+		sum += Vector3(pos[i * 4], pos[i * 4 + 1], pos[i * 4 + 2]);
+		count++;
+	}
+	r_center = count > 0 ? sum / (float)count : Vector3();
+	float r2 = 0.0f;
+	for (int i = 0; i < num_total_vertices; i += 16) {
+		r2 = MAX(r2, Vector3(pos[i * 4], pos[i * 4 + 1], pos[i * 4 + 2]).distance_squared_to(r_center));
 	}
 	return Math::sqrt(r2);
 }

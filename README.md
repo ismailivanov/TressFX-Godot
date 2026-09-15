@@ -37,6 +37,8 @@ tune a hairstyle while the animation plays.
   Kajiya-Kay diffuse with two shifted Marschner highlights, distance LOD, optional shadows.
 - **Fast to iterate.** Loading a 75,000-strand groom takes about 40 ms, so every change in the
   Inspector is instant, and the editor simulation sleeps when nothing changes.
+- **Only pays for what you see.** Hair that is hidden, off screen or beyond a distance you set
+  stops simulating, and colliders nobody uses are not rebuilt.
 
 ## Quick start
 

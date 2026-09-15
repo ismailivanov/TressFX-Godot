@@ -37,6 +37,9 @@ The character was teleported. Call `reset_positions()` after a teleport. If it h
 load, the skeleton's rest pose and the `.tfx` do not match (wrong skeleton, wrong bone names,
 wrong scale).
 
+**`debug_print_distances()` prints "cells unset" for the whole field.**
+The collider is not listed in any hair's `collision_meshes`; fields nobody uses are not built.
+
 **Vertices flicker at rest.**
 See [Tuning](Tuning.md), *Jitter*.
 
