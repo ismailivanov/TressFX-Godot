@@ -50,8 +50,9 @@ tune a hairstyle while the animation plays.
    Colour, fiber width and lighting live in that material.
 
 Turn on MSAA 4x and TAA in the project settings; the strands rely on both to look smooth. The
-[addon README](addons/tressfx/README.md) covers the asset formats, every parameter, tuning
-recipes for fur, long hair and ponytails, and the differences from the original TressFX.
+[user guide](docs/Home.md) (also on the [wiki](https://github.com/ismailivanov/TressFX-Godot/wiki))
+covers the asset formats, every parameter, tuning recipes for fur, long hair and ponytails,
+performance and troubleshooting.
 
 ## Install
 
