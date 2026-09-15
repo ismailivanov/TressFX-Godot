@@ -64,5 +64,5 @@ Per hair node, roughly: the ribbon vertex buffer (12 bytes per ribbon vertex, tw
 vertex; the ribbons carry no attributes, everything is derived from the vertex index), the index
 buffer (24 bytes per hair vertex), the positions texture (16 bytes per hair vertex) and the
 simulation buffers (about 80 bytes per hair vertex). The RatBoy fur with 604,000 vertices takes
-about 85 MB of GPU memory; a typical 20,000-strand hairstyle of 16 vertices takes about 30 MB. Colliders take 4 bytes per
+about 85 MB of GPU memory; a typical 20,000-strand hairstyle of 16 vertices takes about 45 MB. Colliders take 4 bytes per
 distance field cell (36 MB at `num_cells_x` 80).

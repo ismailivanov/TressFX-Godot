@@ -104,7 +104,6 @@ num_follow_hairs = 3
 tip_separation = 1.0
 import_scale = 0.01
 material = ExtResource("7")
-cast_hair_shadows = true
 lod_enabled = true
 lod_start_distance = 2.5
 lod_end_distance = 7.0
@@ -158,7 +157,7 @@ hair sim gpu 0.0 ms | sdf build gpu 0.0 ms
 tressfx cpu 0.01 ms
 20224 strands (5056 guides), 323584 vertices
 4 colliders, 5.5 M sdf cells
-3.08 M triangles drawn this frame
+2.75 M triangles drawn this frame
 2x2, msaa off"
 horizontal_alignment = 2
 

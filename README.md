@@ -79,6 +79,40 @@ want them in your project.
 Both scenes take command-line flags for benchmarks and jitter checks; they are listed at the
 top of `main.gd` and `bust.gd`.
 
+## Limitations
+
+Read this before deciding to ship it.
+
+- **Rendering needs MSAA 4x and TAA.** The strands are drawn with alpha-to-coverage instead of
+  TressFX's order-independent transparency (ShortCut and PPLL were not ported). Without MSAA
+  the hair looks like noisy lines; with it, close-ups still show dithered edges, and strands
+  thinner than a pixel rely on TAA to stop shimmering. MSAA is a cost on the whole scene.
+- **No hair self-shadowing.** The deep shadow map was not ported; a root-darkening term stands
+  in. `cast_hair_shadows` uses ordinary shadow maps and renders the hair once more per shadow
+  cascade (the ponytail demo goes from 0.67 to 2.5 million triangles per frame with it on).
+- **Forward+ or Mobile renderer only.** There is no `RenderingDevice` under the Compatibility
+  (OpenGL) renderer, so no fallback for old hardware or the web. Mobile is untested.
+- **Triangle counts are large by nature.** Every strand of `n` vertices is `2 (n - 1)`
+  triangles: a 20,000-strand hairstyle at 16 vertices is 600,000 triangles, the RatBoy demo's
+  82,000 strands are 1.5 million. That is how strand hair works everywhere (TressFX shipped in
+  games at around 20,000 strands); the cost is fill rate, about 1 to 2 ms for such a hairstyle
+  on a mid-range GPU at 1080p, and it scales with resolution.
+- **GPU memory** is about 140 bytes per hair vertex: 45 MB for that 20,000-strand hairstyle,
+  85 MB for the RatBoy fur, plus 4 bytes per distance field cell for each collider.
+- **The simulation runs once per frame, not on a fixed timestep** (the same as TressFX). Its
+  behaviour changes a little with the frame rate; the time step is clamped at 50 ms.
+- **Colliders must be closed meshes**, the distance field only exists in a band around the
+  surface, `num_cells_x` is capped at 128, and a groom's rest pose has to start outside its
+  colliders.
+- **Assets have to come from somewhere.** The addon reads TressFX's `.tfx`/`.tfxbone`/`.tfxmesh`
+  and includes a Maya ASCII converter; there is no Blender exporter in the box. Vertices per
+  strand must be 4, 8, 16, 32 or 64, and one node holds at most 16 million vertices.
+- **One set of parameters per node.** A hairstyle whose parts need different stiffness or gravity
+  is split into several `.tfx` files and nodes.
+- **One material per node**; the node writes its simulation texture into it.
+- **Binaries** are provided for Linux, Windows (x86_64) and macOS. Android would need the Mobile
+  renderer and a build from source; iOS and the web are not supported.
+
 ## Development
 
 The extension is built with [godot-cpp](https://github.com/godotengine/godot-cpp) and SCons.
