@@ -59,7 +59,7 @@ performance and troubleshooting.
 ## Install
 
 1. Download the [latest release](https://github.com/ismailivanov/TressFX-Godot/releases/latest)
-   or install it from the Godot Asset Library.
+   or install it from the [Godot Asset Store](https://store.godotengine.org).
 2. Copy `addons/tressfx` into your project. There is no plugin to enable; Godot picks up the
    `.gdextension` file on its own.
 3. Open the project once so the compute shaders get imported.

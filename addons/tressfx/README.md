@@ -29,7 +29,7 @@ colliders and drawn as camera-facing ribbons with Marschner-style lighting.
 
 ## Installation
 
-1. Copy `addons/tressfx` into your project (or install it from the Asset Library). The
+1. Copy `addons/tressfx` into your project (or install it from the Godot Asset Store). The
    `.gdextension` file is picked up automatically; there is no plugin to enable. The demo scenes
    and their assets live in `addons/tressfx/demo` (about 150 MB); delete that folder if you do
    not need them.
