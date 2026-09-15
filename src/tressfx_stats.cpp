@@ -6,6 +6,7 @@
 #include "tressfx_gpu.h"
 #include "tressfx_hair.h"
 
+#include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/rendering_server.hpp>
 #include <godot_cpp/classes/scene_tree.hpp>
 #include <godot_cpp/classes/viewport.hpp>
@@ -17,6 +18,11 @@ namespace godot {
 void TressFXStats::_notification(int p_what) {
 	switch (p_what) {
 		case NOTIFICATION_READY: {
+			// A runtime overlay only. In the editor nothing draws unless something changes, so
+			// capturing timestamps every frame would overflow the query pool.
+			if (Engine::get_singleton()->is_editor_hint()) {
+				break;
+			}
 			set_anchors_and_offsets_preset(Control::PRESET_TOP_RIGHT);
 			set_offset(SIDE_LEFT, -560);
 			set_offset(SIDE_RIGHT, -12);
@@ -138,7 +144,7 @@ void TressFXStats::_read_timestamps() {
 
 void TressFXStats::set_measure_gpu(bool p_enabled) {
 	measure_gpu = p_enabled;
-	if (is_inside_tree()) {
+	if (is_inside_tree() && !Engine::get_singleton()->is_editor_hint()) {
 		tressfx_gpu_timing = p_enabled;
 	}
 }

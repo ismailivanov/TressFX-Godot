@@ -4,7 +4,7 @@
 		On-screen performance readout for TressFX.
 	</brief_description>
 	<description>
-		Shows the frame rate, the viewport draw time, the GPU time of the hair simulation and of the distance field builds, the main-thread cost of every [TressFXHair] and [TressFXCollisionMesh] in the tree, and the strand and cell counts. Drop it under a [CanvasLayer]; it anchors itself to the top right corner.
+		A runtime overlay; it does nothing in the editor. Shows the frame rate, the viewport draw time, the GPU time of the hair simulation and of the distance field builds, the main-thread cost of every [TressFXHair] and [TressFXCollisionMesh] in the tree, and the strand and cell counts. Drop it under a [CanvasLayer]; it anchors itself to the top right corner.
 	</description>
 	<tutorials>
 	</tutorials>

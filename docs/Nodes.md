@@ -110,7 +110,8 @@ frame, so a static collider, or one whose hair is asleep, costs nothing.
 
 ## TressFXStats
 
-Inherits `Label`. Drop it under a `CanvasLayer`; it anchors itself to the top right and shows
+Inherits `Label`. A runtime overlay, inert in the editor. Drop it under a `CanvasLayer`; it
+anchors itself to the top right and shows
 the frame rate, viewport draw time, hair simulation and distance field GPU time, the main-thread
 cost of every TressFX node, strand and cell counts, and the triangles drawn this frame.
 
