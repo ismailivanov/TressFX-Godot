@@ -4,6 +4,7 @@
 [ext_resource type="PackedScene" uid="uid://cpseu8b34bhqh" path="res://addons/tressfx/demo/ponytail/ponytail.fbx" id="2"]
 [ext_resource type="Material" path="res://addons/tressfx/demo/ponytail_hair_material.tres" id="6"]
 [ext_resource type="Material" path="res://addons/tressfx/demo/ponytail_tail_material.tres" id="7"]
+[ext_resource type="Script" uid="uid://cmkfx86j2l07k" path="res://addons/tressfx/demo/demo_switcher.gd" id="switcher"]
 
 [sub_resource type="Environment" id="env"]
 background_mode = 1
@@ -141,5 +142,8 @@ transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, -0.15, 0)
 [node name="StatsLayer" type="CanvasLayer" parent="." unique_id=1915995647]
 
 [node name="Stats" type="TressFXStats" parent="StatsLayer" unique_id=562456617]
+
+[node name="DemoSwitcher" type="CanvasLayer" parent="." unique_id=1734261205]
+script = ExtResource("switcher")
 
 [editable path="Bust/Ponytail"]

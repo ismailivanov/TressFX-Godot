@@ -1,5 +1,5 @@
 extends Node3D
-## Bust demos (Sintel, Ruby ponytail) with TressFX hair. No skeleton: the bust node moves
+## Bust demos (Ruby ponytail, Blender hair) with TressFX hair. No skeleton: the bust node moves
 ## and the hair follows it as a single rigid bone.
 ## Idle: a slow look-around. Drag with the left mouse button to turn the bust yourself.
 ## Flags (after `--`): --still, --no-collision, --gpu-timing, --jitter-check, --bench, --shot=<dir>,

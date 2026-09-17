@@ -32,6 +32,7 @@
 [ext_resource type="Texture2D" uid="uid://ccb3vodglyh2b" path="res://addons/tressfx/demo/ratboy/ratBoySubstanceReady_main_Normal.png" id="30_s8cym"]
 [ext_resource type="Material" path="res://addons/tressfx/demo/fur_material.tres" id="hair_mat_fur"]
 [ext_resource type="Material" path="res://addons/tressfx/demo/mohawk_material.tres" id="hair_mat_mohawk"]
+[ext_resource type="Script" uid="uid://cmkfx86j2l07k" path="res://addons/tressfx/demo/demo_switcher.gd" id="switcher"]
 
 [sub_resource type="Environment" id="1"]
 background_mode = 1
@@ -2839,3 +2840,6 @@ follow_bone = "frenchHornMonster_R_LowerArm_JNT"
 [node name="StatsLayer" type="CanvasLayer" parent="." unique_id=1468334915]
 
 [node name="Stats" type="TressFXStats" parent="StatsLayer" unique_id=1915094553]
+
+[node name="DemoSwitcher" type="CanvasLayer" parent="." unique_id=880214466]
+script = ExtResource("switcher")

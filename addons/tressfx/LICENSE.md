@@ -49,3 +49,10 @@ THE SOFTWARE.
 
 The C++ bindings are [godot-cpp](https://github.com/godotengine/godot-cpp), MIT License,
 Copyright (c) 2017-present Godot Engine contributors.
+
+## Demo assets
+
+- `demo/ponytail/`: AMD's model, license in `demo/ponytail/LICENSE.txt`.
+- `demo/blender_hair/`: the bust is "Infinite, 3D Head Scan" by Lee Perry-Smith
+  (Infinite-Realities), [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/); the hairstyle
+  is MIT like the rest of the addon. Details in `demo/blender_hair/LICENSE.txt`.

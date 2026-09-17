@@ -2,6 +2,7 @@
 
 [![Godot](https://img.shields.io/badge/Godot-4.7%2B-478cbf?logo=godotengine&logoColor=white)](https://godotengine.org)
 [![Release](https://img.shields.io/github/v/release/ismailivanov/TressFX-Godot?label=release)](https://github.com/ismailivanov/TressFX-Godot/releases)
+[![Godot Asset Store](https://img.shields.io/badge/Godot%20Asset%20Store-TressFX-478cbf?logo=godotengine&logoColor=white)](https://store.godotengine.org/asset/carbonstore/tressfx-real-time-hair-fur/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-f1c40f.svg)](LICENSE)
 [![Support](https://img.shields.io/badge/support-Buy%20Me%20a%20Coffee-ffdd00.svg)](https://buymeacoffee.com/carbon06)
 
@@ -36,7 +37,8 @@ tune a hairstyle while the animation plays.
 - **Skinned or rigid.** Give the hair a skeleton and a `.tfxbone` file and it follows the
   animation; give it nothing and it follows the node, which is all a bust or a prop needs.
 - **Colliders from any mesh.** A `CapsuleMesh`, a skinned body proxy, or a `.tfxmesh` from
-  the Maya exporter. The distance field is rebuilt only when the collider actually moves.
+  the Maya or Blender exporter. The editor draws them in the pose the simulation uses, so you can
+  see where they sit inside the body; a toolbar button hides them. The distance field is rebuilt only when the collider actually moves.
 - **Hair that looks like hair.** Thin tips, per-strand colour variation, body-albedo roots,
   Kajiya-Kay diffuse with two shifted Marschner highlights, distance LOD, hair shadows. No MSAA
   needed.
@@ -44,6 +46,10 @@ tune a hairstyle while the animation plays.
   Inspector is instant, and the editor simulation sleeps when nothing changes.
 - **Only pays for what you see.** Hair that is hidden, off screen or beyond a distance you set
   stops simulating, and colliders nobody uses are not rebuilt.
+- **Groom in Blender.** The [Blender to Godot Hair](https://github.com/ismailivanov/Blender-to-Godot-Hair)
+  add-on (also in `addons/tressfx/tools`) exports Blender's hair curves with strand UVs and bone
+  weights, and collision meshes as `.tfxmesh`; the [Blender guide](docs/Blender.md) goes from an
+  empty hair object to a skinned hairstyle in Godot.
 
 ## Quick start
 
@@ -64,7 +70,7 @@ performance and troubleshooting.
 ## Install
 
 1. Download the [latest release](https://github.com/ismailivanov/TressFX-Godot/releases/latest)
-   or install it from the [Godot Asset Store](https://store.godotengine.org).
+   or install it from the [Godot Asset Store](https://store.godotengine.org/asset/carbonstore/tressfx-real-time-hair-fur/).
 2. Copy `addons/tressfx` into your project. There is no plugin to enable; Godot picks up the
    `.gdextension` file on its own.
 3. Open the project once so the compute shaders get imported.
@@ -80,9 +86,15 @@ want them in your project.
   ponytail on a bust with primitive colliders. Drag with the mouse to turn the head.
 - **RatBoy** (`addons/tressfx/demo/main.tscn`): AMD's own sample character with fur and a
   mohawk skinned to the animation, colliding with the body and both hands.
+- **Blender hair** (`addons/tressfx/demo/blender_hair.tscn`): a scanned head with a spiked
+  mohawk that stands up and sways a little, made in Blender and exported with the add-on together
+  with the head and body collision meshes.
+  The Blender file is next to it (`demo/blender_hair/source/blender_hair.blend`), ready to
+  change and export again.
 
-Both scenes take command-line flags for benchmarks and jitter checks; they are listed at the
-top of `main.gd` and `bust.gd`.
+The button in the bottom-right corner (or the N key) goes to the next demo. The scenes take
+command-line flags for benchmarks and jitter checks; they are listed at the top of `main.gd`
+and `bust.gd`.
 
 ## Limitations
 
@@ -112,8 +124,8 @@ Read this before deciding to ship it.
   surface, `num_cells_x` is capped at 128, and a groom's rest pose has to start outside its
   colliders.
 - **Assets have to come from somewhere.** The addon reads TressFX's `.tfx`/`.tfxbone`/`.tfxmesh`
-  and includes a Maya ASCII converter; there is no Blender exporter in the box. Vertices per
-  strand must be 4, 8, 16, 32 or 64, and one node holds at most 16 million vertices.
+  and includes a Blender exporter and a Maya ASCII converter. Vertices per strand must be 4, 8,
+  16, 32 or 64, and one node holds at most 16 million vertices.
 - **One set of parameters per node.** A hairstyle whose parts need different stiffness or gravity
   is split into several `.tfx` files and nodes.
 - **One material per node**; the node writes its simulation texture into it.
@@ -148,4 +160,6 @@ If TressFX for Godot saves you time, you can support the work: [Buy me a coffee]
 
 [MIT](LICENSE) © Ismail Ivanov. The simulation, collision and shading algorithms are ported
 from AMD TressFX (MIT, © Advanced Micro Devices); see `addons/tressfx/LICENSE.md`. The
-ponytail model is AMD's, the RatBoy scene is AMD's sample content.
+ponytail model is AMD's, the RatBoy scene is AMD's sample content. The Blender hair demo's bust
+is "Infinite, 3D Head Scan" by Lee Perry-Smith (Infinite-Realities), CC BY 3.0; its hairstyle
+was made in Blender for this project (see `addons/tressfx/demo/blender_hair/LICENSE.txt`).

@@ -1,0 +1,31 @@
+Blender hair demo
+=================
+
+Head scan
+---------
+
+bust.glb, the bust_*.jpg textures Godot extracts from it, the "bust", "head_collider" and
+"body_collider" objects in source/blender_hair.blend and head_collider.tfxmesh and
+body_collider.tfxmesh are "Infinite, 3D Head Scan" by
+Lee Perry-Smith, Infinite-Realities (http://www.ir-ltd.net/), licensed under a Creative Commons
+Attribution 3.0 Unported License (https://creativecommons.org/licenses/by/3.0/). Based on a work
+at www.triplegangers.com. Taken from the three.js repository
+(https://github.com/mrdoob/three.js, examples/models/gltf/LeePerrySmith).
+
+Changes: scaled to real size, UVs flipped vertically, colour and normal maps packed into the
+files; the colliders are copies cut at the neck, closed and decimated.
+
+Original notice:
+
+    Creative Commons Licence
+    Infinite, 3D Head Scan by Lee Perry-Smith is licensed under a Creative Commons Attribution 3.0 Unported License.
+    Based on a work at www.triplegangers.com.
+    Permissions beyond the scope of this license may be available at http://www.ir-ltd.net/
+    Please remember: Do what you want with the files, but always mention where you got them from...
+
+Hair
+----
+
+The hairstyle (the "mohawk" object in source/blender_hair.blend and mohawk.tfx) was made
+in Blender for TressFX for Godot and is released under the MIT License, like the rest of the
+addon: see addons/tressfx/LICENSE.md.

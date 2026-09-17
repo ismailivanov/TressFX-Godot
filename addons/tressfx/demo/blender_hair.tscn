@@ -1,0 +1,103 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://addons/tressfx/demo/bust.gd" id="1_uhbu7"]
+[ext_resource type="PackedScene" path="res://addons/tressfx/demo/blender_hair/bust.glb" id="2_xo4x6"]
+[ext_resource type="Shader" path="res://addons/tressfx/shaders/tressfx_strand.gdshader" id="3_20cdk"]
+[ext_resource type="Script" path="res://addons/tressfx/demo/demo_switcher.gd" id="4_a7tjb"]
+
+[sub_resource type="Environment" id="Environment_sxtkn"]
+background_mode = 1
+background_color = Color(0.22, 0.23, 0.27, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.62, 0.62, 0.65, 1)
+ambient_light_energy = 0.5
+tonemap_mode = 2
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_mn77k"]
+render_priority = 0
+shader = ExtResource("3_20cdk")
+shader_parameter/verts_per_strand = null
+shader_parameter/base_color = Color(0.08, 0.05, 0.03, 1)
+shader_parameter/tip_color = Color(0.38, 0.28, 0.17, 1)
+shader_parameter/tip_percentage = 1.0
+shader_parameter/fiber_radius = 0.0006
+shader_parameter/fiber_ratio = 0.3
+shader_parameter/thin_tip = null
+shader_parameter/expand_pixels = null
+shader_parameter/lod_start = null
+shader_parameter/lod_end = null
+shader_parameter/lod_width_multiplier = null
+shader_parameter/k_diffuse = 0.9
+shader_parameter/k_spec1 = 0.2
+shader_parameter/spec_exp1 = 80.0
+shader_parameter/k_spec2 = 0.2
+shader_parameter/spec_exp2 = 20.0
+shader_parameter/cone_angle_deg = null
+shader_parameter/root_shadow = 0.5
+shader_parameter/color_variation = 0.35
+shader_parameter/tip_fade = 0.3
+
+[node name="BlenderHair" type="Node3D" unique_id=2014719558]
+script = ExtResource("1_uhbu7")
+idle_yaw = 0.6
+idle_speed = 0.7
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1817112481]
+environment = SubResource("Environment_sxtkn")
+
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=532123055]
+transform = Transform3D(0.866, -0.25, 0.433, 0, 0.866, 0.5, -0.5, -0.433, 0.75, 0, 3, 2)
+shadow_enabled = true
+directional_shadow_max_distance = 4.0
+
+[node name="Rim" type="OmniLight3D" parent="." unique_id=532337530]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.35, 0.55, -0.5)
+light_color = Color(0.95, 0.96, 1, 1)
+light_energy = 2.0
+omni_range = 1.5
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=1074251826]
+transform = Transform3D(1, 0, 0, 0, 0.9971993, 0.07478995, 0, -0.07478995, 0.9971993, 0, 0.36, 0.8)
+fov = 40.0
+
+[node name="Bust" type="Node3D" parent="." unique_id=613093859]
+transform = Transform3D(0.8253356, 0, 0.5646425, 0, 1, 0, -0.5646425, 0, 0.8253356, 0, 0, 0)
+
+[node name="Model" parent="Bust" unique_id=244106745 instance=ExtResource("2_xo4x6")]
+
+[node name="HeadCollider" type="TressFXCollisionMesh" parent="Bust" unique_id=752799882]
+tfxmesh_path = "res://addons/tressfx/demo/blender_hair/head_collider.tfxmesh"
+num_cells_x = 64
+push_limit = 3.0
+
+[node name="BodyCollider" type="TressFXCollisionMesh" parent="Bust" unique_id=1979772436]
+tfxmesh_path = "res://addons/tressfx/demo/blender_hair/body_collider.tfxmesh"
+num_cells_x = 48
+collision_margin = 0.5
+push_limit = 3.0
+
+[node name="Mohawk" type="TressFXHair" parent="Bust" unique_id=882060705 node_paths=PackedStringArray("collision_meshes")]
+tfx_path = "res://addons/tressfx/demo/blender_hair/mohawk.tfx"
+num_follow_hairs = 3
+tip_separation = 0.3
+follow_radius = 0.004
+material = SubResource("ShaderMaterial_mn77k")
+cast_hair_shadows = true
+lod_enabled = true
+lod_start_distance = 1.5
+lod_percent = 0.25
+collision_meshes = [NodePath("../HeadCollider"), NodePath("../BodyCollider")]
+vsp_coeff = 0.9
+local_stiffness = 0.9
+global_stiffness = 0.6
+global_range = 0.65
+length_iterations = 3
+damping = 0.1
+gravity = 1.0
+
+[node name="StatsLayer" type="CanvasLayer" parent="." unique_id=330440292]
+
+[node name="Stats" type="TressFXStats" parent="StatsLayer" unique_id=1701900718]
+
+[node name="DemoSwitcher" type="CanvasLayer" parent="." unique_id=41406058]
+script = ExtResource("4_a7tjb")

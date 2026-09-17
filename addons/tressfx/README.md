@@ -13,7 +13,9 @@ colliders and drawn as camera-facing ribbons with Marschner-style lighting.
   Kajiya-Kay diffuse plus two shifted Marschner highlights, root darkening, per-strand colour
   variation, distance LOD, optional shadow casting.
 - **Editor:** the hair simulates live in the editor. Move the skeleton, scrub an animation or
-  change a parameter and it reacts immediately; when nothing changes it goes to sleep.
+  change a parameter and it reacts immediately; when nothing changes it goes to sleep. Colliders
+  are drawn as orange shapes in the pose the simulation uses; select a hair to see all of its
+  colliders on top of the body; the **Hair Colliders** toolbar button hides them.
 - **Cost:** loading a 75k-strand groom takes 40 ms; the main-thread cost per frame is a few
   microseconds per node. Everything else is GPU time.
 
@@ -72,9 +74,12 @@ AMD ships a Maya exporter (`upstream/tool/Maya` in the TressFX repository). This
 - `addons/tressfx/tools/ma_to_tfx.py` reads every `nurbsCurve` from a Maya ASCII file,
   resamples it and writes a `.tfx` (`--split-tail-z` splits a hairstyle into two files, see the
   ponytail demo).
-- For Blender there are community add-ons:
-  [deathbravo/BlenderTressFxTfxExporter](https://github.com/deathbravo/BlenderTressFxTfxExporter),
-  [treviasxk/BlenderExportTressFX](https://github.com/treviasxk/BlenderExportTressFX).
+- `addons/tressfx/tools/tressfx_blender_export.py` is the
+  [Blender to Godot Hair](https://github.com/ismailivanov/Blender-to-Godot-Hair) add-on (Blender
+  4.2 or later, also released on its own): groom with Blender's hair tools, press **Export to
+  Godot**, and it writes the hair Curves objects to `.tfx` with strand UVs, `.tfxbone` with the
+  bone weights of their surface mesh, meshes marked as colliders to `.tfxmesh` and the character
+  to `.glb`. See [Hair from Blender](https://github.com/ismailivanov/TressFX-Godot/blob/main/docs/Blender.md).
 
 Per-strand parameter groups were removed in TressFX 4, so a hairstyle whose parts must behave
 differently is split into several `.tfx` files with one `TressFXHair` node each.
@@ -94,6 +99,8 @@ fur fully to rest.
   `global_range` 0.2, `vsp_coeff` 0.25 (velocity shock propagation copies the head's motion
   rigidly onto the strand; 0.76 makes a helmet), `local_stiffness` 0.35, `damping` 0.1,
   `gravity` 1.5.
+- **Standing spikes** (mohawk): `global_stiffness` 0.6 over `global_range` 0.65,
+  `local_stiffness` 0.9, `vsp_coeff` 0.9, `damping` 0.1.
 - **Wind:** `wind_magnitude` is an acceleration in the same units as gravity; 1 to 3 bends the
   demo fur visibly. It gusts between half and one and a half times the value.
 
@@ -152,6 +159,8 @@ builds; run the editor or game with `--verbose` to log asset loading.
 
 ## Demos
 
+The button in the bottom-right corner of every demo (or the N key) opens the next one.
+
 - `addons/tressfx/demo/ponytail.tscn` AMD's TressFX 3.1 ponytail (Maya source converted with
   `ma_to_tfx.py`) on the Ruby head, primitive colliders, no skeleton. Drag with the mouse to
   turn the head.
@@ -160,6 +169,10 @@ builds; run the editor or game with `--verbose` to log asset loading.
   `--no-collision`, `--no-sdf`, `--hide-hair`, `--no-anim`, `--wind=<f>`, `--bench` (with
   `--disable-vsync`), `--jitter-check` (prints the share of vertices that still jitter),
   `--shot=<dir>` (screenshots).
+- `addons/tressfx/demo/blender_hair.tscn` a scanned head with hair made in Blender and exported
+  with `tressfx_blender_export.py`: a spiked mohawk that stands up and sways a little, and head
+  and body collision meshes exported from the same file. The Blender file is
+  in `demo/blender_hair/source/`. Same controls and flags as the ponytail.
 
 ## Limitations
 
@@ -189,8 +202,8 @@ Read this before deciding to ship it.
   surface, `num_cells_x` is capped at 128, and a groom's rest pose has to start outside its
   colliders.
 - **Assets have to come from somewhere.** The addon reads TressFX's `.tfx`/`.tfxbone`/`.tfxmesh`
-  and includes a Maya ASCII converter; there is no Blender exporter in the box. Vertices per
-  strand must be 4, 8, 16, 32 or 64, and one node holds at most 16 million vertices.
+  and includes a Blender exporter and a Maya ASCII converter. Vertices per strand must be 4, 8,
+  16, 32 or 64, and one node holds at most 16 million vertices.
 - **One set of parameters per node.** A hairstyle whose parts need different stiffness or gravity
   is split into several `.tfx` files and nodes.
 - **One material per node**; the node writes its simulation texture into it.
@@ -209,7 +222,9 @@ An LLM was used in this project.
 ## License
 
 MIT. See `addons/tressfx/LICENSE.md` for the AMD TressFX and godot-cpp notices. The ponytail demo
-asset carries its own license in `addons/tressfx/demo/ponytail/LICENSE.txt`.
+asset carries its own license in `addons/tressfx/demo/ponytail/LICENSE.txt`. The Blender hair
+demo's bust is "Infinite, 3D Head Scan" by Lee Perry-Smith (Infinite-Realities), CC BY 3.0, see
+`addons/tressfx/demo/blender_hair/LICENSE.txt`.
 
 Source code, build instructions and the class reference sources live one level up, in the
 repository this addon is built from (`src/`, `SConstruct`, `doc_classes/`).
