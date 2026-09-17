@@ -7,6 +7,7 @@ it collide with a character, tune it, and keep it fast.
 | Page | What it covers |
 |---|---|
 | [Getting Started](Getting-Started.md) | Install, project settings, your first hair, colliders, the editor |
+| [Hair from Blender](Blender.md) | Grooming hair in Blender, exporting it, setting it up in Godot |
 | [Assets](Assets.md) | The `.tfx`, `.tfxbone` and `.tfxmesh` formats and how to produce them |
 | [Nodes](Nodes.md) | Every property and method of `TressFXHair`, `TressFXCollisionMesh`, `TressFXStats` |
 | [Tuning](Tuning.md) | What the simulation parameters do, recipes for fur, long hair and ponytails, fixing jitter |

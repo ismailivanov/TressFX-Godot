@@ -24,7 +24,9 @@ every push and uploads the binaries and a packaged addon as artifacts.
 - `src/` the sources. `tressfx_hair` and `tressfx_collision_mesh` each have a main-thread node
   and a render-thread `*GPU` object that owns the `RenderingDevice` resources; `tressfx_asset`
   loads `.tfx` and `.tfxbone`; `tressfx_skin` builds the skinning matrices; `tressfx_gpu` holds
-  the compute pipelines shared by every node; `tressfx_stats` is the overlay.
+  the compute pipelines shared by every node; `tressfx_stats` is the overlay; `tressfx_editor` is
+  the always-on editor plugin that draws the collider gizmos (registered at the editor
+  initialization level only, so exported games never load it).
 - `addons/tressfx/shaders/` the compute shaders (`tressfx_sim.glsl` simulation,
   `tressfx_sdf.glsl` distance field build, `tressfx_sdf_collide.glsl` collision) and the strand
   material shader. They are Godot `.glsl` resources compiled to SPIR-V by the editor's importer.

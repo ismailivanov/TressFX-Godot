@@ -109,9 +109,15 @@ class TressFXHair : public Node3D {
 	Vector3 bound_center; // Rest-pose centroid in skeleton (or node) space.
 	float bound_radius = 1.0f;
 	uint64_t last_cpu_usec = 0;
+	// Editor: modification times of the asset files, to reload them when an exporter rewrites them.
+	uint64_t file_stamp = 0;
+	uint64_t pending_file_stamp = 0;
+	uint64_t last_file_check_msec = 0;
 
 	void _load();
 	void _reload();
+	uint64_t _file_stamp() const;
+	void _reload_if_files_changed();
 	void _init_gpu();
 	void _unload_gpu();
 	void _step(double p_delta);

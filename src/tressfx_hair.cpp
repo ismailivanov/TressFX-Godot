@@ -5,6 +5,7 @@
 #include <godot_cpp/classes/array_mesh.hpp>
 #include <godot_cpp/classes/camera3d.hpp>
 #include <godot_cpp/classes/engine.hpp>
+#include <godot_cpp/classes/file_access.hpp>
 #include <godot_cpp/classes/image.hpp>
 #include <godot_cpp/classes/rd_shader_file.hpp>
 #include <godot_cpp/classes/rd_texture_format.hpp>
@@ -236,6 +237,9 @@ void TressFXHair::_notification(int p_what) {
 			_unload_gpu();
 		} break;
 		case NOTIFICATION_PROCESS: {
+			if (Engine::get_singleton()->is_editor_hint()) {
+				_reload_if_files_changed();
+			}
 			_step(get_process_delta_time());
 		} break;
 	}
@@ -351,6 +355,8 @@ void TressFXHair::_load() {
 		return;
 	}
 	const uint64_t t = Time::get_singleton()->get_ticks_msec();
+	file_stamp = _file_stamp();
+	pending_file_stamp = file_stamp;
 	loaded = asset.load(tfx_path, num_follow_hairs, tip_separation, import_scale, follow_radius);
 	if (!loaded) {
 		return;
@@ -389,6 +395,34 @@ void TressFXHair::_reload() {
 		mi->set_mesh(Ref<Mesh>());
 	}
 	_load();
+}
+
+uint64_t TressFXHair::_file_stamp() const {
+	uint64_t stamp = FileAccess::file_exists(tfx_path) ? FileAccess::get_modified_time(tfx_path) : 0;
+	if (FileAccess::file_exists(tfxbone_path)) {
+		stamp = stamp * 31 + FileAccess::get_modified_time(tfxbone_path);
+	}
+	return stamp;
+}
+
+// The .tfx and .tfxbone are not imported resources, so nothing tells the editor when the Blender
+// add-on writes them again. Check once a second and reload once the files have stopped changing
+// (the exporter writes the two files one after the other).
+void TressFXHair::_reload_if_files_changed() {
+	const uint64_t now = Time::get_singleton()->get_ticks_msec();
+	if (tfx_path.is_empty() || now - last_file_check_msec < 1000) {
+		return;
+	}
+	last_file_check_msec = now;
+	const uint64_t stamp = _file_stamp();
+	if (stamp == file_stamp) {
+		return;
+	}
+	if (stamp == pending_file_stamp) {
+		_reload();
+	} else {
+		pending_file_stamp = stamp;
+	}
 }
 
 void TressFXHair::_init_gpu() {

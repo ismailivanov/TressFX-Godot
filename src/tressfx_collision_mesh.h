@@ -5,8 +5,10 @@
 #include "tressfx_gpu.h"
 #include "tressfx_skin.h"
 
+#include <godot_cpp/classes/array_mesh.hpp>
 #include <godot_cpp/classes/mesh.hpp>
 #include <godot_cpp/classes/node3d.hpp>
+#include <godot_cpp/classes/triangle_mesh.hpp>
 #include <godot_cpp/variant/packed_int32_array.hpp>
 #include <godot_cpp/variant/packed_vector3_array.hpp>
 
@@ -65,8 +67,18 @@ class TressFXCollisionMesh : public Node3D {
 	TressFXCollisionGPU *gpu = nullptr;
 	PackedByteArray last_bones;
 	PackedByteArray last_params;
+	uint64_t file_stamp = 0; // Editor: modification time of the .tfxmesh, to reload it when rewritten.
+	uint64_t pending_file_stamp = 0;
+	uint64_t last_file_check_msec = 0;
 	uint64_t last_used_frame = 0;
 	uint64_t last_cpu_usec = 0;
+	// Editor gizmo: the skin and node transforms it was last drawn with, and its click shape, which
+	// is slow to build and only refreshed once the pose has been still for a moment.
+	PackedByteArray gizmo_pose;
+	int gizmo_still_frames = 0;
+	Ref<TriangleMesh> gizmo_triangles;
+	bool gizmo_triangles_stale = true;
+	friend class TressFXCollisionGizmoPlugin;
 
 	void _load();
 	void _reload();
@@ -77,6 +89,9 @@ class TressFXCollisionMesh : public Node3D {
 	bool _from_mesh(const Ref<Mesh> &p_mesh);
 	bool _finish_load();
 	void _build_adjacency();
+	void _update_gizmo_pose();
+	uint64_t _file_stamp() const;
+	void _reload_if_file_changed();
 
 protected:
 	static void _bind_methods();
@@ -110,6 +125,9 @@ public:
 	TressFXCollisionGPU *_get_gpu() const { return gpu; }
 	// Called by every TressFXHair that simulates against this mesh; unused meshes are not rebuilt.
 	void _mark_used();
+	// Editor gizmo: the collision surface as the distance field sees it (skinned), in this node's
+	// space, with a simple light baked into the vertex colours. Null until loaded.
+	Ref<ArrayMesh> build_debug_mesh();
 
 	TressFXCollisionMesh();
 };

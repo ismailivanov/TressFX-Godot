@@ -2,6 +2,7 @@
 
 - [Home](Home.md)
 - [Getting Started](Getting-Started.md)
+- [Hair from Blender](Blender.md)
 - [Assets](Assets.md)
 - [Nodes](Nodes.md)
 - [Tuning](Tuning.md)

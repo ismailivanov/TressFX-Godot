@@ -24,8 +24,18 @@ void TressFXSkin::init(Skeleton3D *p_skeleton) {
 	bone_count = MIN(p_skeleton->get_bone_count(), TRESSFX_MAX_BONES);
 	inverse_bind.resize(bone_count);
 	transforms.resize(bone_count);
+	// Bind the rest pose where it sits in the skeleton's scene, as glTF inverse binds do: hair and
+	// collider positions are relative to the scene root (the imported file's root), skinned
+	// mesh or not.
+	Transform3D to_scene;
+	const Node *owner = p_skeleton->get_owner();
+	for (Node *n = p_skeleton; n != nullptr && n != owner; n = n->get_parent()) {
+		if (const Node3D *n3d = Object::cast_to<Node3D>(n)) {
+			to_scene = n3d->get_transform() * to_scene;
+		}
+	}
 	for (int i = 0; i < bone_count; i++) {
-		inverse_bind[i] = p_skeleton->get_bone_global_rest(i).affine_inverse();
+		inverse_bind[i] = (to_scene * p_skeleton->get_bone_global_rest(i)).affine_inverse();
 	}
 	// Prefer the mesh Skin's inverse bind poses: an exact match with the rendered mesh.
 	TypedArray<Node> children = p_skeleton->get_children();

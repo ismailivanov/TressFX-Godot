@@ -42,6 +42,11 @@ colliders at `num_cells_x` 80 with `push_limit` 0.25.
 tied to the head: `global_stiffness` 0.06 over `global_range` 0.2 (roots only), `vsp_coeff` 0.25,
 `local_stiffness` 0.35, `damping` 0.1, `gravity` 1.5.
 
+**Standing spikes** (the mohawk of the Blender hair demo): `global_stiffness` 0.6 over
+`global_range` 0.65, `local_stiffness` 0.9, `vsp_coeff` 0.9, `damping` 0.1, `gravity` 1. The
+spikes sag less than 4 mm and sway a few millimetres when the head turns. A `global_range` of 1
+freezes them; 0.5 or less lets them droop by a centimetre or more.
+
 ## Colliders
 
 **The rest pose must lie outside the colliders.** A strand whose root sits inside the collider is
@@ -50,6 +55,10 @@ whole strand swings outwards and the hair ends up standing on end. Two ways out:
 collider so it sits just inside the visible skin, or raise `collision_skip_root_vertices` (the
 long-hair recipe uses 5) so the first vertices are never collided. Do not use `collision_margin`
 for this; it makes it worse.
+
+**Look at them.** The editor draws each collider in orange. With nothing selected you see only
+what pokes out of the body (a capsule end through a shoulder, a sphere through the scalp); select
+the hair to see all of its colliders at once and check that the strands start outside them.
 
 **Colliders should be closed.** The distance field only knows inside from outside where the mesh
 has an inside. An open mesh (a head with a hole at the neck, a shirt with no bottom) makes hair

@@ -155,6 +155,7 @@ void TressFXCollisionMesh::_notification(int p_what) {
 			add_to_group("tressfx_collision");
 			set_process(true);
 			_load();
+			update_gizmos();
 		} break;
 		case NOTIFICATION_ENTER_TREE: {
 			// Re-added to the tree (reparenting): the GPU side was freed on exit, rebuild it.
@@ -167,9 +168,134 @@ void TressFXCollisionMesh::_notification(int p_what) {
 			_unload_gpu();
 		} break;
 		case NOTIFICATION_PROCESS: {
+			if (Engine::get_singleton()->is_editor_hint()) {
+				_reload_if_file_changed();
+				_update_gizmo_pose();
+			}
 			_step();
 		} break;
 	}
+}
+
+uint64_t TressFXCollisionMesh::_file_stamp() const {
+	return mesh.is_null() && FileAccess::file_exists(tfxmesh_path) ? FileAccess::get_modified_time(tfxmesh_path) : 0;
+}
+
+// Editor: pick up a .tfxmesh written again by an exporter, as TressFXHair does for its files.
+void TressFXCollisionMesh::_reload_if_file_changed() {
+	const uint64_t now = Time::get_singleton()->get_ticks_msec();
+	if (mesh.is_valid() || tfxmesh_path.is_empty() || now - last_file_check_msec < 1000) {
+		return;
+	}
+	last_file_check_msec = now;
+	const uint64_t stamp = _file_stamp();
+	if (stamp == file_stamp) {
+		return;
+	}
+	if (stamp == pending_file_stamp) {
+		_reload();
+	} else {
+		pending_file_stamp = stamp;
+	}
+}
+
+// Editor: a skinned collider's gizmo is drawn from the bone poses, so redraw it whenever they or
+// this node move. Without a skeleton the shape simply moves with the node.
+void TressFXCollisionMesh::_update_gizmo_pose() {
+	if (num_vertices == 0 || skin.get_skeleton() == nullptr) {
+		return;
+	}
+	skin.update(get_global_transform());
+	PackedByteArray pose = skin.pack();
+	const Transform3D t = get_global_transform();
+	PackedFloat32Array node;
+	for (int i = 0; i < 3; i++) {
+		node.push_back(t.basis.rows[i].x);
+		node.push_back(t.basis.rows[i].y);
+		node.push_back(t.basis.rows[i].z);
+		node.push_back(t.origin[i]);
+	}
+	pose.append_array(node.to_byte_array());
+	if (pose != gizmo_pose) {
+		gizmo_pose = pose;
+		gizmo_still_frames = 0;
+		gizmo_triangles_stale = true;
+		update_gizmos();
+	} else if (++gizmo_still_frames == 30 && gizmo_triangles_stale) {
+		update_gizmos(); // Settled: rebuild the click shape too.
+	}
+}
+
+Ref<ArrayMesh> TressFXCollisionMesh::build_debug_mesh() {
+	if (num_vertices == 0 || num_triangles == 0) {
+		return Ref<ArrayMesh>();
+	}
+	skin.update(get_global_transform());
+	const Transform3D to_local = get_global_transform().affine_inverse();
+	const Vector3 light = Vector3(0.4f, 1.0f, 0.6f).normalized();
+	const int bone_count = (int)skin.transforms.size();
+	const float *v = vertices.ptr();
+	const float *s = skinning.ptr();
+
+	PackedVector3Array points;
+	PackedColorArray colors;
+	points.resize(num_vertices);
+	colors.resize(num_vertices);
+	Vector3 *pw = points.ptrw();
+	Color *cw = colors.ptrw();
+	for (int i = 0; i < num_vertices; i++) {
+		// The same blend as the SDF shader's bone_skinning pass.
+		Basis b = Basis(Vector3(), Vector3(), Vector3());
+		Vector3 o;
+		float weight_sum = 0.0f;
+		for (int k = 0; k < 4; k++) {
+			const float w = s[i * 8 + 4 + k];
+			if (k > 0 && w <= 0.0f) {
+				continue;
+			}
+			const Transform3D &t = skin.transforms[CLAMP((int)s[i * 8 + k], 0, bone_count - 1)];
+			for (int r = 0; r < 3; r++) {
+				b.rows[r] += t.basis.rows[r] * w;
+			}
+			o += t.origin * w;
+			weight_sum += w;
+		}
+		if (weight_sum <= 0.0f) {
+			b = skin.transforms[0].basis;
+			o = skin.transforms[0].origin;
+			weight_sum = 1.0f;
+		}
+		const Vector3 p = (b.xform(Vector3(v[i * 8], v[i * 8 + 1], v[i * 8 + 2])) + o) / weight_sum;
+		const Vector3 n = b.xform(Vector3(v[i * 8 + 4], v[i * 8 + 5], v[i * 8 + 6])).normalized();
+		pw[i] = to_local.xform(p);
+		const float shade = 0.35f + 0.65f * MAX(0.0f, n.dot(light));
+		cw[i] = Color(shade, shade, shade);
+	}
+
+	// Godot draws clockwise faces as front faces. Meshes from other tools may wind the other way;
+	// the sign of the enclosed volume tells, so the gizmo can cull back faces either way.
+	PackedInt32Array tris = indices;
+	int32_t *tw = tris.ptrw();
+	double volume = 0.0;
+	for (int t = 0; t < num_triangles; t++) {
+		const Vector3 &a = pw[tw[t * 3]];
+		volume += a.dot(pw[tw[t * 3 + 1]].cross(pw[tw[t * 3 + 2]]));
+	}
+	if (volume > 0.0) {
+		for (int t = 0; t < num_triangles; t++) {
+			SWAP(tw[t * 3 + 1], tw[t * 3 + 2]);
+		}
+	}
+
+	Array arrays;
+	arrays.resize(Mesh::ARRAY_MAX);
+	arrays[Mesh::ARRAY_VERTEX] = points;
+	arrays[Mesh::ARRAY_COLOR] = colors;
+	arrays[Mesh::ARRAY_INDEX] = tris;
+	Ref<ArrayMesh> debug_mesh;
+	debug_mesh.instantiate();
+	debug_mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, arrays);
+	return debug_mesh;
 }
 
 void TressFXCollisionMesh::_step() {
@@ -228,6 +354,8 @@ void TressFXCollisionMesh::_load() {
 		return;
 	}
 	const uint64_t t = Time::get_singleton()->get_ticks_msec();
+	file_stamp = _file_stamp();
+	pending_file_stamp = file_stamp;
 	skin.init(get_hair_skeleton());
 	const bool ok = mesh.is_valid() ? _from_mesh(mesh) : _parse_tfxmesh(tfxmesh_path);
 	if (!ok || !_finish_load()) {
@@ -277,6 +405,10 @@ void TressFXCollisionMesh::_reload() {
 	num_vertices = 0;
 	num_triangles = 0;
 	_load();
+	gizmo_pose.clear();
+	gizmo_triangles.unref();
+	gizmo_triangles_stale = true;
+	update_gizmos();
 }
 
 void TressFXCollisionMesh::_unload_gpu() {
@@ -359,11 +491,16 @@ bool TressFXCollisionMesh::_parse_tfxmesh(const String &p_path) {
 				// "index name"
 				const long bi = strtol(word, nullptr, 10);
 				skip_blanks();
+				// The name is the rest of the line: bone names may contain spaces.
 				const char *name = p;
-				while (*p && *p != ' ' && *p != '\t' && *p != '\r' && *p != '\n') {
+				while (*p && *p != '\n') {
 					p++;
 				}
-				const String bone_name = String::utf8(name, p - name);
+				const char *name_end = p;
+				while (name_end > name && (name_end[-1] == ' ' || name_end[-1] == '\t' || name_end[-1] == '\r')) {
+					name_end--;
+				}
+				const String bone_name = String::utf8(name, name_end - name);
 				const int id = skin.find_bone(bone_name);
 				if (id < 0 && skin.get_skeleton() != nullptr) {
 					WARN_PRINT("TressFXCollisionMesh: bone '" + bone_name + String("' not found in the skeleton."));

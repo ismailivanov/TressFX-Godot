@@ -1,7 +1,7 @@
 # Assets
 
-TressFX uses three file types. All three come from AMD's own tools, and this page also lists what
-this addon adds to produce them.
+TressFX uses three file types. AMD's Maya exporter and this addon's Blender exporter write all
+three; the Maya ASCII converter writes the first.
 
 ## `.tfx`: the guide strands
 
@@ -36,9 +36,11 @@ transform: the node's own.
 ## `.tfxmesh`: a collision mesh
 
 A text file with bone names, then vertices (position, normal, four bone indices, four weights),
-then triangles. `TressFXCollisionMesh` reads it directly. You do not need this format: any Godot
-`Mesh` works as a collider, and primitives (`CapsuleMesh`, `SphereMesh`) are usually better than
-a real body mesh because they are closed and smooth.
+then triangles. `TressFXCollisionMesh` reads it directly; a bone name runs to the end of its line.
+You do not need this format: any Godot `Mesh` works as a collider, and primitives (`CapsuleMesh`,
+`SphereMesh`) are usually better than a real body mesh because they are closed and smooth. Its use
+is a low-poly body proxy skinned like the character, which the Blender exporter writes from any
+mesh marked as a collider.
 
 ## Producing the files
 
@@ -64,10 +66,11 @@ Units are kept as they are in the file; set `import_scale` on the node.
 
 ### Blender
 
-Two community add-ons export a Blender particle-hair system to `.tfx`:
-[deathbravo/BlenderTressFxTfxExporter](https://github.com/deathbravo/BlenderTressFxTfxExporter)
-and [treviasxk/BlenderExportTressFX](https://github.com/treviasxk/BlenderExportTressFX). Both are
-unfinished and neither writes a `.tfxbone`; for a rigid head (a bust, a helmet) that is enough.
+`addons/tressfx/tools/tressfx_blender_export.py` is the
+[Blender to Godot Hair](https://github.com/ismailivanov/Blender-to-Godot-Hair) add-on (Blender 4.2 or later) that
+writes the `.tfx` with strand UVs and the `.tfxbone` from a hair Curves object and its skinned
+surface mesh, and a `.tfxmesh` from every mesh marked as a hair collider. [Hair from Blender](Blender.md) walks through grooming, exporting and the Godot
+setup.
 
 ### Writing your own
 

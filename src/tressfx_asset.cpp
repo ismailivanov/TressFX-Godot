@@ -165,7 +165,7 @@ bool TressFXAsset::load_bone_data(const String &p_path, const TressFXSkin &p_ski
 		f->get_32(); // Bone index in the file, sequential.
 		const uint32_t name_len = f->get_32(); // Includes the null terminator.
 		ERR_FAIL_COND_V_MSG(name_len == 0 || name_len > 1024, false, p_path + String(" is corrupt."));
-		const String bone_name = f->get_buffer(name_len - 1).get_string_from_ascii();
+		const String bone_name = f->get_buffer(name_len - 1).get_string_from_utf8();
 		f->get_8();
 		const int id = p_skin.find_bone(bone_name);
 		if (id < 0) {

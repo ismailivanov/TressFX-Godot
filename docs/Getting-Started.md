@@ -9,7 +9,7 @@
 3. Check that it worked: open the *Create New Node* dialog and search for `TressFXHair`. If the
    class is missing, see [Troubleshooting](Troubleshooting.md).
 
-The addon ships its two demo scenes in `addons/tressfx/demo` (about 150 MB of textures and
+The addon ships its three demo scenes in `addons/tressfx/demo` (about 150 MB of textures and
 models). Delete that folder if you do not want it in your project.
 
 ## 2. Project settings
@@ -56,7 +56,10 @@ transform, which is what a bust or a helmet on a prop needs.
    **follow_bone**).
 2. Give it a **mesh**. A `CapsuleMesh` or `SphereMesh` is the best start; a low-poly body proxy
    works too; a skinned mesh uses its bone weights. Or point **tfxmesh_path** at a `.tfxmesh`.
-3. Position and size it so it sits just inside the visible surface.
+3. Position and size it so it sits just inside the visible surface. The editor draws every
+   collider as an orange shape: parts that stick out of the body show through, and selecting the
+   collider (or a hair that lists it) shows the whole shape on top of the body. The
+   **Hair Colliders** button in the 3D editor's toolbar hides and shows the shapes.
 4. Add it to the hair's **collision_meshes** list.
 
 The collider is turned into a signed distance field on the GPU and rebuilt whenever it moves.
@@ -79,6 +82,9 @@ The hair simulates in the editor exactly as it does in the game. Move the skelet
 animation in the Animation panel, or drag the bust, and the hair reacts. Every parameter in the
 Inspector applies immediately; the ones that rebuild the asset (`tfx_path`, `tfxbone_path`,
 `hair_skeleton`, `num_follow_hairs`, `follow_radius`, `import_scale`) take a few milliseconds.
+
+When a `.tfx` or `.tfxbone` is written again (by the [Blender add-on](Blender.md), for
+example), the node reloads it within a second or two.
 
 After about five seconds without any change to the pose or the parameters the editor simulation
 goes to sleep, so an open scene with hair does not keep the GPU busy. Any change wakes it up.

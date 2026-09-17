@@ -4,9 +4,10 @@
 		A mesh that [TressFXHair] strands are kept out of.
 	</brief_description>
 	<description>
-		Turns a mesh into a signed distance field on the GPU and rebuilds it whenever the mesh moves. The source is either a [code].tfxmesh[/code] file exported from Maya or any Godot [Mesh] (a [SphereMesh] or [CapsuleMesh] primitive, or a skinned mesh whose bone weights follow [member hair_skeleton]). Add the node to a hair's [member TressFXHair.collision_meshes] and the hair stays outside it.
+		Turns a mesh into a signed distance field on the GPU and rebuilds it whenever the mesh moves. The source is either a [code].tfxmesh[/code] file exported from Maya or Blender (the Blender to Godot Hair add-on) or any Godot [Mesh] (a [SphereMesh] or [CapsuleMesh] primitive, or a skinned mesh whose bone weights follow [member hair_skeleton]). Add the node to a hair's [member TressFXHair.collision_meshes] and the hair stays outside it.
 		Closed, evenly tessellated meshes work best: the distance field is only built in a narrow band around the surface, and open edges make hair kink along them. A body proxy of a few thousand triangles is plenty.
 		A hair groom's rest pose must lie outside its colliders; see [member TressFXHair.collision_skip_root_vertices] for grooms rooted inside the skin.
+		In the editor the collider is drawn as an orange shape in the pose the distance field uses. Unselected, only the parts outside the body show; selecting the collider, or a [TressFXHair] that lists it, draws the whole shape on top. The [b]Hair Colliders[/b] button in the 3D editor's toolbar (Editor Setting [code]tressfx/editor/show_collision_shapes[/code]) hides and shows them. In the editor a [code].tfxmesh[/code] written again by an exporter is reloaded within a second or two.
 	</description>
 	<tutorials>
 	</tutorials>

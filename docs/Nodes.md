@@ -86,6 +86,13 @@ The node is in the `tressfx_hair` group while it is in the tree.
 
 Inherits `Node3D`. A mesh turned into a signed distance field every frame it moves.
 
+In the editor the collider is drawn as an orange shape, skinned to the current pose exactly as the
+distance field sees it. Unselected, only the parts outside the body show; select the collider, or
+a `TressFXHair` that lists it, to see the whole shape on top. Click the shape to select the
+node. The **Hair Colliders** button in the 3D editor's toolbar (the Editor Setting
+`tressfx/editor/show_collision_shapes`) hides and shows all of them. A `.tfxmesh` written again
+by an exporter is reloaded in the editor within a second or two.
+
 | Property | Default | Meaning |
 |---|---|---|
 | `tfxmesh_path` | `""` | A `.tfxmesh` file. Reloads. |
