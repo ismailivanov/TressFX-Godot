@@ -36,8 +36,9 @@ still worth knowing:
    are the look: `base_color`, `tip_color`, `fiber_radius` (metres; 0.001 to 0.002 for hair),
    `k_diffuse`, the two specular terms, `root_shadow`, `color_variation`.
 
-Use one material per hair node. The node writes its simulation texture and the vertex count into
-the material's parameters, so two hair nodes cannot share one.
+Several hair nodes may share one material. Each node draws with an internal copy of it that
+also holds the node's own simulation texture, and copies changes to the material before every
+frame is drawn.
 
 ## 4. Attaching the hair to a character
 

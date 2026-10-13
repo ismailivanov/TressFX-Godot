@@ -30,6 +30,10 @@ layout(push_constant, std430) uniform PC {
 	int verts_per_strand;
 	int follow_per_guide;
 	int skip_root_vertices;
+	int group_offset; // first group of this dispatch (large passes are split, see tressfx_dispatch)
+	int pad0;
+	int pad1;
+	int pad2;
 } pc;
 
 #define g_cell_size p.grid.x
@@ -64,7 +68,7 @@ bool gather(vec3 pos, out float d[8], out vec3 t) {
 }
 
 void main() {
-	uint gid = gl_GlobalInvocationID.x;
+	uint gid = (gl_WorkGroupID.x + uint(pc.group_offset)) * THREAD_GROUP_SIZE + gl_LocalInvocationID.x;
 	if (gid >= uint(pc.num_guide_vertices)) {
 		return;
 	}

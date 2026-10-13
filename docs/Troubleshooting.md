@@ -8,6 +8,11 @@ exports, release libraries by release exports. If your platform is missing, see
 [Building](Building.md). Also check the editor output for a message about the `.gdextension`
 file.
 
+**Linux: `Can't open dynamic library ... version 'GLIBC_2.xx' not found`.**
+The library was built on a system with a newer glibc than yours. The binaries of version 0.3.0
+and earlier need glibc 2.43; later ones need 2.28, the same as Godot 4.7. Update the addon, or
+build it from source on your machine (see [Building](Building.md)).
+
 **The node exists but nothing is drawn.**
 - The project must use the Forward+ or Mobile renderer. Under Compatibility (OpenGL) there is
   no `RenderingDevice` and the nodes stay silent.
@@ -57,9 +62,18 @@ something changes every frame: an AnimationPlayer set to autoplay, or a non-zero
 `wind_magnitude` (wind gusts continuously). Hair shadows (`cast_hair_shadows`) are also expensive
 in the editor viewport.
 
-**Two hair nodes share a material and one of them looks wrong.**
-Each node writes its own simulation texture into its material; give every node its own
-`ShaderMaterial` (duplicate the resource).
+**The editor crashes when you click `positions` under the material's shader parameters.**
+Versions 0.3.0 and earlier stored the simulation texture in the material, and Godot 4.7's texture
+inspector crashes on it. The node now keeps it in an internal copy of the material and clears it
+from your material when the scene loads, so the inspector no longer offers it. A scene or material
+file saved by an old version keeps an empty texture entry until the material is saved again; it
+is harmless.
+
+**The output fills with `Dispatch amount of X compute groups (...) is larger than device limit (65535)`.**
+Versions 0.3.0 and earlier dispatched large distance fields (`num_cells_x` 63 and above) and very
+large hair assets in one go, more than many GPUs accept (65535 groups, the minimum Vulkan
+guarantees and always the case under Direct3D 12). The collider then stopped working. Update the
+addon; the work is now split into several dispatches.
 
 **The scene file grew huge after saving.**
 Only the node properties are saved. If the file contains the hair mesh data, an older version of

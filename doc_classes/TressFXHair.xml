@@ -121,7 +121,7 @@
 			Fiber width multiplier reached at [member lod_end_distance].
 		</member>
 		<member name="material" type="ShaderMaterial" setter="set_material" getter="get_material">
-			Material using [code]tressfx_strand.gdshader[/code]; colour, fiber radius and lighting live there. Without one a default material is created. Use one material per hair node: the node writes its simulated positions texture and vertex count into the material's shader parameters.
+			Material using [code]tressfx_strand.gdshader[/code]; colour, fiber radius and lighting live there. Without one a default material is created. The node draws with an internal copy of the material that also holds its simulated positions texture, so several hair nodes may share one material. Changes to the material are copied before every frame is drawn.
 		</member>
 		<member name="num_follow_hairs" type="int" setter="set_num_follow_hairs" getter="get_num_follow_hairs" default="0">
 			Follow strands generated around every guide strand. Follow strands are not simulated, they are offset copies of their guide, so they are almost free. Changing it reloads the asset.

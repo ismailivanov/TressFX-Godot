@@ -76,7 +76,10 @@ void TressFXHairGPU::init(int64_t p_self) {
 	format->set_format(RenderingDevice::DATA_FORMAT_R32G32B32A32_SFLOAT);
 	format->set_width(TRESSFX_TEXTURE_WIDTH);
 	format->set_height((g->num_total_vertices + TRESSFX_TEXTURE_WIDTH - 1) / TRESSFX_TEXTURE_WIDTH);
-	format->set_usage_bits(RenderingDevice::TEXTURE_USAGE_SAMPLING_BIT | RenderingDevice::TEXTURE_USAGE_STORAGE_BIT);
+	// CAN_COPY_FROM lets Texture2DRD::get_image() read it back; Godot 4.7's texture inspector
+	// crashes on a Texture2DRD whose image cannot be read.
+	format->set_usage_bits(RenderingDevice::TEXTURE_USAGE_SAMPLING_BIT | RenderingDevice::TEXTURE_USAGE_STORAGE_BIT |
+			RenderingDevice::TEXTURE_USAGE_CAN_COPY_FROM_BIT);
 	Ref<RDTextureView> view;
 	view.instantiate();
 	g->image = rd->texture_create(format, view);
@@ -160,13 +163,8 @@ void TressFXHairGPU::simulate(int64_t p_self, const PackedByteArray &p_params, c
 		rd->compute_list_bind_compute_pipeline(list, TressFXPipelines::get()->collision.pipeline);
 		rd->compute_list_bind_uniform_set(list, sets.first, 0);
 		rd->compute_list_bind_uniform_set(list, sets.second, 1);
-		const int32_t push_constant[4] = { g->num_guide_strands * n, n, g->num_follow_per_guide, skip_root_vertices };
-		PackedByteArray bytes;
-		bytes.resize(sizeof(push_constant));
-		memcpy(bytes.ptrw(), push_constant, sizeof(push_constant));
-		rd->compute_list_set_push_constant(list, bytes, sizeof(push_constant));
-		rd->compute_list_dispatch(list, vertex_groups, 1, 1);
-		rd->compute_list_add_barrier(list);
+		int32_t push_constant[8] = { g->num_guide_strands * n, n, g->num_follow_per_guide, skip_root_vertices, 0, 0, 0, 0 };
+		tressfx_dispatch_groups(rd, list, push_constant, 8, 4, vertex_groups);
 		collided = true;
 	}
 	if (collided) {
@@ -226,13 +224,22 @@ void TressFXHair::_notification(int p_what) {
 			_load();
 		} break;
 		case NOTIFICATION_ENTER_TREE: {
-			// Re-added to the tree (reparenting): the GPU side was freed on exit, rebuild it.
+			// Material edits are copied right before every frame is drawn, so they also show while
+			// the tree is paused and the same frame a tween or script makes them.
+			RenderingServer::get_singleton()->connect("frame_pre_draw", callable_mp(this, &TressFXHair::_on_frame_pre_draw));
+			// Re-added to the tree (reparenting): the GPU side was freed on exit, rebuild it. The
+			// texture lost its RenderingServer RID on exit; hand the material the new one before the
+			// GPU side binds the image (the order of _load), or the hair draws the freed one.
 			if (loaded && gpu == nullptr) {
 				frame = 0;
+				active_material->set_shader_parameter("positions", texture);
 				_init_gpu();
 			}
 		} break;
-		case NOTIFICATION_EXIT_TREE:
+		case NOTIFICATION_EXIT_TREE: {
+			RenderingServer::get_singleton()->disconnect("frame_pre_draw", callable_mp(this, &TressFXHair::_on_frame_pre_draw));
+			_unload_gpu();
+		} break;
 		case NOTIFICATION_PREDELETE: {
 			_unload_gpu();
 		} break;
@@ -460,20 +467,109 @@ void TressFXHair::_unload_gpu() {
 	}
 }
 
+// The meshes draw with a material of their own: a copy of `material` plus the run-time uniforms
+// of this hair. The user's resource keeps only what the artist set there, so the inspector never
+// shows (nor the editor saves) the simulated positions texture, and hair nodes can share one
+// material.
 void TressFXHair::_apply_material() {
-	active_material = material;
+	if (default_shader.is_null()) {
+		default_shader = ResourceLoader::get_singleton()->load(STRAND_SHADER_PATH);
+	}
+	if (material.is_valid()) {
+		if (material->get_shader().is_null()) {
+			material->set_shader(default_shader); // So that the strand parameters show in the inspector.
+		}
+		// Godot creates a material's RenderingServer side only once something asks for it, and only
+		// then do its edits request a redraw. Nothing draws the user's material any more; without
+		// this, an edit while nothing else changes (low-processor mode) would not reach the screen.
+		material->get_rid();
+	}
 	if (active_material.is_null()) {
 		active_material.instantiate();
 	}
-	if (active_material->get_shader().is_null()) {
-		active_material->set_shader(ResourceLoader::get_singleton()->load(STRAND_SHADER_PATH));
-	}
+	_sync_material(true);
 	active_material->set_shader_parameter("positions", texture);
 	active_material->set_shader_parameter("strand_uvs", strand_uv_texture);
 	active_material->set_shader_parameter("verts_per_strand", asset.num_verts_per_strand);
 	for (MeshInstance3D *mi : mesh_instances) {
 		mi->set_material_override(active_material);
 	}
+}
+
+// Uniforms the node fills in itself, never copied from the user's material.
+static const char *RUNTIME_UNIFORMS[] = { "positions", "strand_uvs", "verts_per_strand", "lod_start", "lod_end", "lod_width_multiplier" };
+
+static bool _is_runtime_uniform(const StringName &p_name) {
+	for (const char *name : RUNTIME_UNIFORMS) {
+		if (p_name == StringName(name)) {
+			return true;
+		}
+	}
+	return false;
+}
+
+void TressFXHair::_on_frame_pre_draw() {
+	if (loaded && is_visible_in_tree()) { // Hidden: synced the frame it shows again.
+		_sync_material(false);
+	}
+}
+
+// Copies the user's material into active_material. ShaderMaterial emits nothing when a parameter
+// changes, so this runs before every frame is drawn: a few dozen Variant compares per hair.
+void TressFXHair::_sync_material(bool p_force) {
+	if (active_material.is_null()) {
+		return;
+	}
+	Ref<Shader> shader = material.is_valid() ? material->get_shader() : Ref<Shader>();
+	if (shader.is_null()) {
+		shader = default_shader;
+	}
+	if (shader != synced_shader) {
+		const Callable on_changed = callable_mp(this, &TressFXHair::_on_shader_changed);
+		if (synced_shader.is_valid()) {
+			synced_shader->disconnect("changed", on_changed);
+		}
+		synced_shader = shader;
+		if (shader.is_valid()) {
+			shader->connect("changed", on_changed); // Shader code edited: the uniforms may differ.
+		}
+		active_material->set_shader(shader);
+		synced_uniforms_dirty = true;
+	}
+	if (synced_uniforms_dirty) {
+		synced_uniforms_dirty = false;
+		synced_uniforms.clear();
+		if (shader.is_valid()) {
+			const Array uniforms = shader->get_shader_uniform_list();
+			for (int i = 0; i < uniforms.size(); i++) {
+				const StringName name = Dictionary(uniforms[i])["name"];
+				if (!_is_runtime_uniform(name)) {
+					synced_uniforms.push_back(name);
+				}
+			}
+		}
+		synced_values.resize(synced_uniforms.size());
+		p_force = true;
+	}
+	for (uint32_t i = 0; i < synced_uniforms.size(); i++) {
+		const Variant value = material.is_valid() ? material->get_shader_parameter(synced_uniforms[i]) : Variant();
+		if (p_force || value != synced_values[i]) {
+			active_material->set_shader_parameter(synced_uniforms[i], value);
+			synced_values[i] = value;
+		}
+	}
+	const int priority = material.is_valid() ? material->get_render_priority() : 0;
+	if (active_material->get_render_priority() != priority) {
+		active_material->set_render_priority(priority);
+	}
+	const Ref<Material> next_pass = material.is_valid() ? material->get_next_pass() : Ref<Material>();
+	if (active_material->get_next_pass() != next_pass) {
+		active_material->set_next_pass(next_pass);
+	}
+}
+
+void TressFXHair::_on_shader_changed() {
+	synced_uniforms_dirty = true;
 }
 
 // Bucket 0 is always drawn; the others fade out one by one between lod_start and lod_end so that
@@ -717,6 +813,15 @@ float TressFXHair::get_import_scale() const {
 
 void TressFXHair::set_material(const Ref<ShaderMaterial> &p_material) {
 	material = p_material;
+	// Versions up to 0.3.0 wrote the run-time uniforms into this material, and scenes saved them
+	// (the positions texture crashes Godot 4.7's inspector). Nothing reads them there any more.
+	if (material.is_valid()) {
+		for (const char *name : RUNTIME_UNIFORMS) {
+			if (material->get_shader_parameter(name).get_type() != Variant::NIL) {
+				material->set_shader_parameter(name, Variant());
+			}
+		}
+	}
 	if (loaded) {
 		_apply_material();
 		_apply_lod();

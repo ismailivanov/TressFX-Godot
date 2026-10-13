@@ -18,7 +18,7 @@ listed `TressFXCollisionMesh` nodes and draws it.
 | `tip_separation` | `0.0` | How much further the follow strands spread towards the tip. |
 | `follow_radius` | `0.012` | Spread of the follow strands around their guide, metres. Reloads. |
 | `import_scale` | `1.0` | Multiplies the file's positions on load; `0.01` for centimetres. Reloads. |
-| `material` | none | `ShaderMaterial` using `tressfx_strand.gdshader`. One per node. |
+| `material` | none | `ShaderMaterial` using `tressfx_strand.gdshader`. Hair nodes may share one. |
 | `cast_hair_shadows` | `false` | Render the strands into shadow maps. Expensive, see [Performance](Performance.md). |
 
 ### LOD
@@ -146,8 +146,11 @@ cost of every TressFX node, strand and cell counts, and the triangles drawn this
 | `color_variation` | `0.3` | Per-strand brightness and tint jitter. |
 | `tip_fade` | `0.25` | Fade over the last part of each strand. |
 
-`positions`, `verts_per_strand`, `lod_start`, `lod_end` and `lod_width_multiplier` are written
-by the node; leave them alone.
+`positions`, `strand_uvs`, `verts_per_strand`, `lod_start`, `lod_end` and `lod_width_multiplier`
+are filled in by the node, on an internal copy of the material it draws with. Values set for them
+in your material are ignored; the inspector still lists them, with the shader's defaults. The
+node copies everything else from your material before every frame is drawn, also while the tree
+is paused. The simulated positions are readable with `capture_positions()`.
 
 The shader renders with `depth_prepass_alpha`. For the alpha-to-coverage look of versions before
 0.2, duplicate it and change its `render_mode` line to

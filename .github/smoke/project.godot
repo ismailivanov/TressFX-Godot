@@ -1,0 +1,7 @@
+; Engine configuration file.
+config_version=5
+
+[application]
+
+config/name="TressFX smoke test"
+config/features=PackedStringArray("4.7")

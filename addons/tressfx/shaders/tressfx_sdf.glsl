@@ -43,7 +43,7 @@ layout(set = 0, binding = 6, std140) uniform Params {
 
 layout(push_constant, std430) uniform PC {
 	int pass;
-	int pad0;
+	int group_offset; // first group of this dispatch (large passes are split, see tressfx_dispatch)
 	int pad1;
 	int pad2;
 } pc;
@@ -252,7 +252,7 @@ void finalize_sdf(uint id) {
 }
 
 void main() {
-	uint id = gl_GlobalInvocationID.x;
+	uint id = (gl_WorkGroupID.x + uint(pc.group_offset)) * THREAD_GROUP_SIZE + gl_LocalInvocationID.x;
 	switch (pc.pass) {
 		case 0: bone_skinning(id); break;
 		case 1: initialize_sdf(id); break;
