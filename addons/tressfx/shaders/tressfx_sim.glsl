@@ -55,7 +55,7 @@ layout(set = 0, binding = 10, rgba32f) restrict writeonly uniform image2D out_po
 
 layout(push_constant, std430) uniform PC {
 	int pass;
-	int pad0;
+	int group_offset; // first group of this dispatch (large passes are split, see tressfx_dispatch)
 	int pad1;
 	int pad2;
 } pc;
@@ -398,7 +398,7 @@ void write_out_pass(uint id) {
 
 void main() {
 	uint lid = gl_LocalInvocationID.x;
-	uint gid = gl_WorkGroupID.x;
+	uint gid = gl_WorkGroupID.x + uint(pc.group_offset);
 	switch (pc.pass) {
 		case 0: integration_and_global_shape(lid, gid); break;
 		case 1: calculate_strand_level_data(lid, gid); break;
@@ -406,6 +406,6 @@ void main() {
 		case 3: local_shape_constraints(lid, gid); break;
 		case 4: length_constraints_wind_and_collision(lid, gid); break;
 		case 5: update_follow_hair_vertices(lid, gid); break;
-		case 6: write_out_pass(gl_GlobalInvocationID.x); break;
+		case 6: write_out_pass(gid * THREAD_GROUP_SIZE + lid); break;
 	}
 }

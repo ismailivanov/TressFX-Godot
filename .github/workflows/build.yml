@@ -9,7 +9,107 @@ on:
   pull_request:
   workflow_dispatch:
 
+env:
+  # godot-cpp commit the binaries are built from. Bump it on purpose, never float on master.
+  GODOT_CPP_REF: 507ed9d840c01a3c5b2a39af8bb4000bfac30bf5
+  # Oldest glibc the Linux binaries may need: the floor of the official Godot 4.7 Linux builds
+  # (Godot's buildroot SDK godot-2023.08.x: GCC 13.2, glibc 2.28).
+  GLIBC_MAX: "2.28"
+  # Godot used by the smoke test.
+  GODOT_VERSION: 4.7.2-stable
+
 jobs:
+  # The Asset Store and source downloads ship the binaries committed in addons/tressfx/bin, not
+  # the CI artifacts. Fail when a Linux library built on a newer system gets committed.
+  committed-binaries:
+    name: Committed Linux binaries (glibc floor)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: sh .github/scripts/check_glibc_floor.sh --max "$GLIBC_MAX" addons/tressfx/bin/libtressfx.linux.*.so
+
+  linux:
+    name: Linux x86_64 (glibc 2.28)
+    runs-on: ubuntu-24.04
+    # AlmaLinux 8 (glibc 2.28) with gcc-toolset-14, git and pipx. Pinned; bump on purpose.
+    container: quay.io/pypa/manylinux_2_28_x86_64:2026.10.03-1@sha256:39df0042d5cc900b085aa25a0659368b42a0006c54c474299b785b44c1b4ff82
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch godot-cpp
+        run: |
+          git clone --filter=blob:none https://github.com/godotengine/godot-cpp godot-cpp
+          git -C godot-cpp checkout --detach "$GODOT_CPP_REF"
+
+      - name: Install SCons
+        run: pipx install scons==4.10.1
+
+      - name: Toolchain
+        run: |
+          gcc --version | head -n 1
+          ldd --version | head -n 1
+
+      # Never upload a committed library by mistake: only what this job builds.
+      - name: Drop the committed Linux libraries
+        run: rm -f addons/tressfx/bin/libtressfx.linux.*.so
+
+      - name: Build debug
+        run: scons platform=linux arch=x86_64 target=template_debug -j"$(nproc)"
+
+      - name: Build release
+        run: scons platform=linux arch=x86_64 target=template_release -j"$(nproc)"
+
+      - name: Check glibc floor
+        run: sh .github/scripts/check_glibc_floor.sh --max "$GLIBC_MAX" addons/tressfx/bin/libtressfx.linux.*.so
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tressfx-bin-linux-x86_64
+          path: addons/tressfx/bin/libtressfx.linux.*.so
+          if-no-files-found: error
+
+  linux-smoke:
+    name: Linux smoke test (Godot 4.7.2 on glibc 2.28)
+    needs: linux
+    runs-on: ubuntu-24.04
+    # Same glibc as the oldest system the official Godot 4.7 binary runs on.
+    container: almalinux:8
+    steps:
+      - name: Install tools
+        run: dnf -y install --setopt=install_weak_deps=False git unzip
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: tressfx-bin-linux-x86_64
+          path: ci-bin
+
+      - name: Fetch Godot
+        run: |
+          curl -fsSL -o godot.zip "https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_linux.x86_64.zip"
+          unzip -q godot.zip
+          mv "Godot_v${GODOT_VERSION}_linux.x86_64" godot
+          chmod +x godot
+          ldd --version | head -n 1
+          ./godot --headless --version
+
+      - name: Load the extension (debug and release libraries)
+        shell: bash # -eo pipefail: a Godot crash or timeout fails the step even after PASS.
+        run: |
+          for lib in template_debug template_release; do
+            rm -rf smoke && mkdir -p smoke/.godot smoke/addons
+            cp -r addons/tressfx smoke/addons/ && rm -rf smoke/addons/tressfx/demo smoke/addons/tressfx/bin/*
+            cp ci-bin/libtressfx.linux.*.so smoke/addons/tressfx/bin/
+            cp .github/smoke/project.godot .github/smoke/smoke.gd smoke/
+            echo 'res://addons/tressfx/tressfx.gdextension' > smoke/.godot/extension_list.cfg
+            # The editor binary loads the "debug" entry; point it at the library under test.
+            sed -i "s#^linux.debug.x86_64 = .*#linux.debug.x86_64 = \"res://addons/tressfx/bin/libtressfx.linux.${lib}.x86_64.so\"#" smoke/addons/tressfx/tressfx.gdextension
+            echo "== ${lib}"
+            timeout 120 ./godot --headless --path smoke --script res://smoke.gd 2>&1 | tee smoke.log
+            grep -q '^TRESSFX_SMOKE PASS$' smoke.log
+          done
+
   build:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.runner }}
@@ -17,30 +117,36 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: Linux x86_64
-            runner: ubuntu-22.04
-            platform: linux
-            arch: x86_64
           - name: Windows x86_64
             runner: windows-latest
             platform: windows
             arch: x86_64
+            files: addons/tressfx/bin/libtressfx.windows.*.dll
           - name: macOS universal
             runner: macos-latest
             platform: macos
             arch: universal
+            files: addons/tressfx/bin/libtressfx.macos.*.framework
     steps:
       - uses: actions/checkout@v4
 
       - name: Fetch godot-cpp
-        run: git clone --depth 1 https://github.com/godotengine/godot-cpp godot-cpp
+        shell: bash
+        run: |
+          git clone --filter=blob:none https://github.com/godotengine/godot-cpp godot-cpp
+          git -C godot-cpp checkout --detach "$GODOT_CPP_REF"
 
       - uses: actions/setup-python@v5
         with:
           python-version: "3.x"
 
       - name: Install SCons
-        run: python -m pip install scons
+        run: python -m pip install scons==4.10.1
+
+      # Never upload a committed library by mistake: only what this job builds.
+      - name: Drop the committed libraries
+        shell: bash
+        run: rm -rf addons/tressfx/bin/libtressfx.${{ matrix.platform }}.*
 
       - name: Build debug
         run: scons platform=${{ matrix.platform }} arch=${{ matrix.arch }} target=template_debug
@@ -48,22 +154,29 @@ jobs:
       - name: Build release
         run: scons platform=${{ matrix.platform }} arch=${{ matrix.arch }} target=template_release
 
+      # Only this platform's libraries: the checkout also holds the committed binaries of the
+      # other platforms, which must not leak into (and race in) the merged package.
       - uses: actions/upload-artifact@v4
         with:
-          name: tressfx-${{ matrix.platform }}-${{ matrix.arch }}
-          path: addons/tressfx/bin/
+          name: tressfx-bin-${{ matrix.platform }}-${{ matrix.arch }}
+          path: ${{ matrix.files }}
+          if-no-files-found: error
 
   package:
     name: Addon package
-    needs: build
-    runs-on: ubuntu-22.04
+    needs: [linux, linux-smoke, build]
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+      - name: Drop the committed binaries
+        run: rm -rf addons/tressfx/bin/*
       - uses: actions/download-artifact@v4
         with:
-          pattern: tressfx-*
+          pattern: tressfx-bin-*
           path: addons/tressfx/bin/
           merge-multiple: true
+      - name: Check glibc floor
+        run: sh .github/scripts/check_glibc_floor.sh --max "$GLIBC_MAX" addons/tressfx/bin/libtressfx.linux.*.so
       - uses: actions/upload-artifact@v4
         with:
           name: tressfx-addon

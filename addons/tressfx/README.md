@@ -23,8 +23,8 @@ colliders and drawn as camera-facing ribbons with Marschner-style lighting.
 
 - Godot 4.7 or later, **Forward+** or **Mobile** renderer (the Compatibility renderer has no
   `RenderingDevice`).
-- Prebuilt binaries for Linux x86_64, Windows x86_64 and macOS. Other platforms build from
-  source, see below.
+- Prebuilt binaries for Linux x86_64 (glibc 2.28 or newer, the same as Godot 4.7), Windows
+  x86_64 and macOS. Other platforms build from source, see the repository's `docs/Building.md`.
 - MSAA is not needed. TAA (`rendering/anti_aliasing/quality/use_taa`) is recommended: it keeps
   strands thinner than a pixel from flickering.
 
@@ -35,7 +35,8 @@ colliders and drawn as camera-facing ribbons with Marschner-style lighting.
    and their assets live in `addons/tressfx/demo` (about 150 MB); delete that folder if you do
    not need them.
 2. Make sure `addons/tressfx/bin` contains the library for your platform. Release builds of the
-   addon ship them; from a source checkout run `scons` first (see *Building from source*).
+   addon ship them; from a source checkout run `scons` first (see the repository's
+   `docs/Building.md`).
 3. Restart the editor once so the compute shaders in `addons/tressfx/shaders` are imported.
 
 ## Quick start
@@ -49,8 +50,8 @@ colliders and drawn as camera-facing ribbons with Marschner-style lighting.
    for a head is a good start; a skinned mesh uses its bone weights). List it in the hair's
    `collision_meshes`.
 4. Make a `ShaderMaterial` with `addons/tressfx/shaders/tressfx_strand.gdshader` and assign it to
-   `material`. Colour, fiber radius, and the lighting terms live there. One material per hair
-   node, the node writes its simulation texture into it.
+   `material`. Colour, fiber radius, and the lighting terms live there. Hair nodes may share
+   one material.
 5. Optional: drop a `TressFXStats` label under a `CanvasLayer` for an on-screen performance
    readout.
 
@@ -206,7 +207,6 @@ Read this before deciding to ship it.
   16, 32 or 64, and one node holds at most 16 million vertices.
 - **One set of parameters per node.** A hairstyle whose parts need different stiffness or gravity
   is split into several `.tfx` files and nodes.
-- **One material per node**; the node writes its simulation texture into it.
 - **Binaries** are provided for Linux, Windows (x86_64) and macOS. Android would need the Mobile
   renderer and a build from source; iOS and the web are not supported.
 

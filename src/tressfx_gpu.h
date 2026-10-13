@@ -47,7 +47,11 @@ public:
 
 Ref<RDUniform> tressfx_make_uniform(int p_binding, RenderingDevice::UniformType p_type, const RID &p_rid);
 void tressfx_free_rids(RenderingDevice *p_rd, LocalVector<RID> &p_rids);
-// Sets the `pass` push constant, dispatches p_groups x 1 x 1 and adds a barrier.
+// Dispatches p_groups x 1 x 1 workgroups, split into several dispatches above the device's
+// maxComputeWorkGroupCount[0]; each one stores its first group in p_push_constant[p_offset_slot]
+// for the shader to add to gl_WorkGroupID.x. Then a barrier.
+void tressfx_dispatch_groups(RenderingDevice *p_rd, int64_t p_list, int32_t *p_push_constant, int p_ints, int p_offset_slot, int p_groups);
+// tressfx_dispatch_groups with the push constant { pass, group offset, 0, 0 }.
 void tressfx_dispatch(RenderingDevice *p_rd, int64_t p_list, int p_pass, int p_groups);
 
 } // namespace godot

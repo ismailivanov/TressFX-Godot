@@ -76,7 +76,8 @@ performance and troubleshooting.
 3. Open the project once so the compute shaders get imported.
 
 The addon needs Godot 4.7 with the Forward+ or Mobile renderer. Linux, Windows and macOS
-binaries are included; other platforms build from source (see below). The demos and their
+binaries are included (the Linux one needs glibc 2.28 or newer, the same as Godot 4.7 itself);
+other platforms build from source (see below). The demos and their
 assets live in `addons/tressfx/demo` and weigh about 150 MB, delete that folder if you do not
 want them in your project.
 
@@ -128,7 +129,6 @@ Read this before deciding to ship it.
   16, 32 or 64, and one node holds at most 16 million vertices.
 - **One set of parameters per node.** A hairstyle whose parts need different stiffness or gravity
   is split into several `.tfx` files and nodes.
-- **One material per node**; the node writes its simulation texture into it.
 - **Binaries** are provided for Linux, Windows (x86_64) and macOS. Android would need the Mobile
   renderer and a build from source; iOS and the web are not supported.
 
@@ -139,14 +139,17 @@ Sources are in `src/`, the in-editor class reference in `doc_classes/`, and the 
 sources in `upstream/` for reference.
 
 ```bash
-git clone --depth 1 https://github.com/godotengine/godot-cpp godot-cpp
+git clone https://github.com/godotengine/godot-cpp godot-cpp
+git -C godot-cpp checkout 507ed9d840c01a3c5b2a39af8bb4000bfac30bf5
 scons platform=linux target=template_debug
 scons platform=linux target=template_release
 ```
 
 Use `platform=windows` or `platform=macos arch=universal` on those systems. The libraries land
 in `addons/tressfx/bin/`. The GitHub Actions workflow builds all three platforms and packages
-the addon on every push.
+the addon on every push; the binaries in the repository are its artifacts. A Linux library built
+on your own machine only loads on systems with the same glibc or newer, see
+[Building](docs/Building.md#portable-linux-binaries).
 
 ## AI use
 

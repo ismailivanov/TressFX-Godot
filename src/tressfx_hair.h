@@ -10,6 +10,7 @@
 #include <godot_cpp/classes/image_texture.hpp>
 #include <godot_cpp/classes/mesh_instance3d.hpp>
 #include <godot_cpp/classes/node3d.hpp>
+#include <godot_cpp/classes/shader.hpp>
 #include <godot_cpp/classes/shader_material.hpp>
 #include <godot_cpp/classes/texture2drd.hpp>
 #include <godot_cpp/templates/hash_map.hpp>
@@ -97,7 +98,14 @@ class TressFXHair : public Node3D {
 	TressFXHairGPU *gpu = nullptr;
 	Ref<Texture2DRD> texture;
 	bool texture_bound = false;
+	// What the meshes draw with: a copy of `material`, kept in sync by _sync_material, plus the
+	// run-time uniforms of this hair. The user's material never holds those.
 	Ref<ShaderMaterial> active_material;
+	Ref<Shader> default_shader;
+	Ref<Shader> synced_shader; // active_material's shader; its `changed` refreshes synced_uniforms.
+	LocalVector<StringName> synced_uniforms; // The uniforms copied from `material`,
+	LocalVector<Variant> synced_values; // and the values last copied.
+	bool synced_uniforms_dirty = true;
 	Ref<ImageTexture> strand_uv_texture; // One texel per strand: its coordinate on the body albedo.
 	LocalVector<MeshInstance3D *> mesh_instances; // One per LOD bucket, internal children.
 	int frame = 0;
@@ -122,6 +130,9 @@ class TressFXHair : public Node3D {
 	void _unload_gpu();
 	void _step(double p_delta);
 	void _apply_material();
+	void _sync_material(bool p_force);
+	void _on_shader_changed();
+	void _on_frame_pre_draw();
 	void _apply_lod();
 	void _make_meshes();
 	PackedByteArray _pack_params(float p_delta) const;

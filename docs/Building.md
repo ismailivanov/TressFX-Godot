@@ -5,10 +5,14 @@ The extension is C++ built against [godot-cpp](https://github.com/godotengine/go
 prerequisites as for building Godot itself.
 
 ```bash
-git clone --depth 1 https://github.com/godotengine/godot-cpp godot-cpp
+git clone https://github.com/godotengine/godot-cpp godot-cpp
+git -C godot-cpp checkout 507ed9d840c01a3c5b2a39af8bb4000bfac30bf5
 scons platform=linux target=template_debug
 scons platform=linux target=template_release
 ```
+
+The godot-cpp commit is the one CI builds with (`GODOT_CPP_REF` in
+`.github/workflows/build.yml`); move both together.
 
 `platform` is `linux`, `windows` or `macos` (add `arch=universal` on macOS; `arch=arm64` for
 Linux on ARM). The first build compiles godot-cpp and takes a few minutes; later builds only
@@ -17,7 +21,33 @@ compile `src/`. The libraries are written to `addons/tressfx/bin/` with the name
 `template_release` what release exports load.
 
 The GitHub Actions workflow in `.github/workflows/build.yml` builds Linux, Windows and macOS on
-every push and uploads the binaries and a packaged addon as artifacts.
+every push and uploads the binaries and a packaged addon as artifacts. The binaries committed to
+`addons/tressfx/bin/` (which the releases and the Asset Store ship) are those artifacts, never
+local builds.
+
+## Portable Linux binaries
+
+A Linux library needs the glibc it was linked against or a newer one: built on a rolling
+distribution, it fails to load elsewhere with `version 'GLIBC_2.xx' not found`. Godot 4.7's own
+Linux builds need glibc 2.28, so CI builds the extension in the
+`quay.io/pypa/manylinux_2_28_x86_64` container (AlmaLinux 8, glibc 2.28, GCC 14) and then:
+
+- `.github/scripts/check_glibc_floor.sh` fails the build if a library needs a glibc symbol newer
+  than 2.28 or links libstdc++ dynamically;
+- a smoke test loads both libraries with the official Godot 4.7.2 in an AlmaLinux 8 container
+  and checks that the TressFX classes are registered.
+
+To make a portable build yourself, run the same container with rootless podman. Remove the
+object files built on the host first, or SCons reuses them:
+
+```bash
+git -C godot-cpp clean -xdfq && rm -f src/*.os
+podman run --rm -v "$PWD":/src:z -w /src quay.io/pypa/manylinux_2_28_x86_64 sh -c \
+  'pipx install scons==4.10.1 && scons platform=linux target=template_debug && scons platform=linux target=template_release'
+sh .github/scripts/check_glibc_floor.sh addons/tressfx/bin/libtressfx.linux.*.so
+```
+
+A build for your own machine needs none of this; it always loads where it was built.
 
 ## Layout
 
